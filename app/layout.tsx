@@ -10,9 +10,9 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: 'Dolcaci — Software for home services businesses',
+  title: 'Dolcaci — Software for home service businesses',
   description:
-    'Dolcaci builds software that helps home services contractors manage customer inquiries, scheduling, dispatching, and payments.',
+    'Dolcaci builds software that helps home service contractors manage customer inquiries, scheduling, dispatching, and payments.',
 };
 
 export default function RootLayout({

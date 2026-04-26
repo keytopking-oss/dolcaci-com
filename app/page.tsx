@@ -17,13 +17,13 @@ export default function Home() {
             style={{ transform: 'translateX(-5.9%)' }}
           />
           <h1 className="font-display mt-6 text-4xl md:text-5xl font-semibold tracking-tight leading-tight">
-            Software for home services businesses.
+            Software for home service businesses.
           </h1>
         </header>
 
         <section className="space-y-5 text-lg leading-relaxed text-neutral-700">
           <p>
-            Dolcaci builds software that helps home services contractors
+            Dolcaci builds software that helps home service contractors
             run their day-to-day operations — customer inquiries, scheduling,
             crew dispatching, and accepting payments — from a single
             phone-friendly app.

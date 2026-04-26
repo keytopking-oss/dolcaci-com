@@ -24,7 +24,7 @@ export default function Privacy() {
           <h2 className="text-xl font-semibold text-neutral-900">Who we are</h2>
           <p className="mt-3">
             Dolcaci LLC (&ldquo;Dolcaci&rdquo;, &ldquo;we&rdquo;, &ldquo;our&rdquo;)
-            is a software company building tools for home services businesses.
+            is a software company building tools for home service businesses.
             This Privacy Policy covers information collected through our
             website at dolcaci.com. Software products we provide to business
             customers are governed by separate agreements with those customers.
