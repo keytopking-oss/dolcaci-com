@@ -590,6 +590,15 @@
           Pick a service, then the package, then the extras you want.
           We handle setup + breakdown — you just show up.
         </p>
+        <!-- Service-area line so customers in unsupported zones see
+             it before they fill out the whole form. -->
+        <p class="mt-4 text-sm text-muted max-w-2xl">
+          <span class="font-medium text-terracotta">●</span>
+          Currently booking events in
+          <span class="text-ink/80">Nassau + western Suffolk County.</span>
+          Travel is included — no extra fees within our service area.
+          Not booking Queens, Manhattan, or Montauk at this time.
+        </p>
       </div>
     </section>
 
@@ -1459,6 +1468,21 @@
                   placeholder="Backyard, beach, park name..."
                 />
               </label>
+            </div>
+
+            <!-- Service-area reminder near the location field. -->
+            <div
+              class="mt-4 px-4 py-3 rounded-md flex items-start gap-3"
+              style="background-color: #fdf9f4; border: 1px solid #e8e1d2;"
+            >
+              <span class="text-terracotta text-lg leading-none mt-0.5">●</span>
+              <p class="text-xs text-ink/75 leading-relaxed">
+                <span class="font-semibold text-ink">Service area:</span>
+                Nassau County + western/central Suffolk County. Travel is
+                included in package pricing. We're not currently taking
+                bookings in Queens, Manhattan, or the Hamptons/Montauk —
+                if you're nearby and want to ask, send us a note.
+              </p>
             </div>
 
             <label class="block mt-4">
