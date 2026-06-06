@@ -2060,11 +2060,35 @@
 
       // ===== Download invoice as PDF =====
       // Uses html2pdf.js (CDN'd above). Captures the #invoice-doc
-      // element as canvas + wraps it in a jsPDF page. Filename uses
-      // the rendered invoice number so the customer's downloads
-      // folder stays organized.
+      // element as canvas + wraps it in a jsPDF page.
+      //
+      // IMPORTANT — we clone the element off-DOM before capturing.
+      // Why: the on-screen invoice has the .success-stagger and
+      // .success-summary-card classes, which start at opacity: 0
+      // and animate up via CSS keyframes. html2canvas (the engine
+      // html2pdf uses under the hood) captures the element's *base*
+      // computed style, not the post-animation forwards-fill state.
+      // Without this clone, the resulting PDF page is blank because
+      // the captured invoice has opacity: 0. The clone strips the
+      // animation classes + force-sets opacity: 1 + positions itself
+      // offscreen so html2canvas can measure it cleanly without
+      // affecting the on-screen view.
       function downloadInvoicePdf() {
-        const el = document.getElementById('invoice-doc');
+        const original = document.getElementById('invoice-doc');
+        const clone = original.cloneNode(true);
+        // Strip the animation classes — they enforce opacity: 0.
+        clone.classList.remove('success-stagger', 'success-summary-card');
+        // Pin offscreen at a fixed width so html2canvas captures a
+        // consistent layout regardless of viewport.
+        clone.style.position = 'absolute';
+        clone.style.left = '-10000px';
+        clone.style.top = '0';
+        clone.style.width = '720px';
+        clone.style.opacity = '1';
+        clone.style.transform = 'none';
+        clone.style.background = '#ffffff';
+        document.body.appendChild(clone);
+
         const filename =
           (currentInvoiceNumber || 'celebration-invoice') + '.pdf';
         const opts = {
@@ -2074,7 +2098,16 @@
           html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
           jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
         };
-        html2pdf().set(opts).from(el).save();
+
+        // Always remove the clone, even if save() rejects.
+        const cleanup = () => {
+          if (clone.parentNode) clone.parentNode.removeChild(clone);
+        };
+        html2pdf()
+          .set(opts)
+          .from(clone)
+          .save()
+          .then(cleanup, cleanup);
       }
 
       // Initial render + listeners.
