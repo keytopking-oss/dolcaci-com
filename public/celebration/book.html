@@ -2243,6 +2243,21 @@
               );
               cloned.style.borderRadius = '0';
               cloned.style.border = 'none';
+
+              // Render the invoice WIDER for capture so its natural
+              // aspect comes close to letter (8.5 / 11 = 0.773). On
+              // screen the invoice sits in a max-w-2xl modal (~672px),
+              // which is taller-than-letter — that's why the previous
+              // canvas-padding fix added cream side-stripes that
+              // pushed content inward. Forcing the captured width to
+              // ~880px (close to letter aspect at typical content
+              // height) makes content fill more of the final page
+              // edge-to-edge — wordmark spreads out, BILL TO / EVENT
+              // DATE columns separate further, line items table uses
+              // its full width. The cream-padding fallback below still
+              // catches any residual aspect mismatch invisibly.
+              cloned.style.width = '880px';
+              cloned.style.maxWidth = '880px';
             },
           })
           .then((origCanvas) => {
