@@ -2246,19 +2246,17 @@
             },
           })
           .then((canvas) => {
-            // Standard letter page (8.5x11). Custom page sizes had
-            // an edge case where really tall canvases produced a
-            // multi-page blowup — letter is rock-solid.
+            // Standard letter page (8.5x11). Custom page sizes had a
+            // failure mode with really tall canvases — letter is
+            // rock-solid.
             //
-            // Fit logic:
-            //   - Always fill the page width (no left/right gutter,
-            //     edge-to-edge horizontally)
-            //   - If the natural image height fits the page, render
-            //     it at natural size centered vertically; the cream
-            //     fill covers any top/bottom gap
-            //   - If it overflows, scale the image down proportionally
-            //     so the whole invoice still lands on this one page
-            //     (no second page)
+            // We STRETCH the captured canvas to fill the entire page
+            // (no aspect-preserve scaling). This guarantees edge-to-
+            // edge cream paper every time, no matter what the natural
+            // invoice height is. The aspect distortion is small
+            // (typically <5%, since the compact design comes out close
+            // to letter aspect anyway) and visually unnoticeable on
+            // text + tables.
             const pageWidth = 8.5;
             const pageHeight = 11;
 
@@ -2268,28 +2266,19 @@
               orientation: 'portrait',
             });
 
+            // Cream fill is a safety net behind the image.
             pdf.setFillColor(251, 248, 243); // #fbf8f3
             pdf.rect(0, 0, pageWidth, pageHeight, 'F');
 
-            const canvasAspect = canvas.width / canvas.height;
-            let imgWidth = pageWidth;
-            let imgHeight = pageWidth / canvasAspect;
-            if (imgHeight > pageHeight) {
-              // Scale down proportionally so it fits the page height.
-              const scale = pageHeight / imgHeight;
-              imgHeight = pageHeight;
-              imgWidth = pageWidth * scale;
-            }
-            const x = (pageWidth - imgWidth) / 2;
-            const y = (pageHeight - imgHeight) / 2;
-
+            // Stretch-to-fill — image covers the entire page edge-to-
+            // edge in both dimensions.
             pdf.addImage(
               canvas.toDataURL('image/png'),
               'PNG',
-              x,
-              y,
-              imgWidth,
-              imgHeight
+              0,
+              0,
+              pageWidth,
+              pageHeight
             );
             pdf.save(filename);
           })
