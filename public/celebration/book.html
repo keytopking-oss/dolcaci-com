@@ -2187,27 +2187,26 @@
         const filename =
           (currentInvoiceNumber || 'celebration-invoice') + '.pdf';
 
+        // Capture the invoice to a canvas, then manually build the
+        // jsPDF page so we can scale-to-fit on a single letter page.
+        // html2pdf's default behavior paginates a too-tall canvas into
+        // multiple pages — fine for a contract but ugly for an
+        // invoice. The fit-to-page logic below guarantees the whole
+        // invoice always lands on one page regardless of how many
+        // add-ons were ticked. Any leftover gutters on the page are
+        // filled with the same cream as the invoice paper so the
+        // visual is seamless.
         const opts = {
-          // margin: 0 = cream paper goes edge-to-edge on the PDF page
-          // (no white gutter around the invoice). The on-screen view
-          // still has rounded corners + an outer border via the card
-          // styling, but those are stripped in onclone below so the
-          // PDF version reaches the page corners.
           margin: 0,
-          filename,
-          image: { type: 'jpeg', quality: 0.96 },
+          image: { type: 'png' }, // PNG = lossless cream — no JPEG drift
           html2canvas: {
             scale: 2,
             useCORS: true,
             backgroundColor: '#fbf8f3',
-            // Fires after html2canvas has built its internal clone of
-            // the target subtree but BEFORE it rasterizes. Last chance
-            // to normalize the DOM for capture.
             onclone: (clonedDoc) => {
               const cloned = clonedDoc.getElementById('invoice-doc');
               if (!cloned) return;
-              // Drop the entry-animation classes so the cloned element
-              // doesn't inherit opacity: 0 from the CSS rule.
+              // Drop entry-animation classes (they enforce opacity: 0).
               cloned.classList.remove(
                 'success-stagger',
                 'success-summary-card'
@@ -2216,12 +2215,10 @@
               cloned.style.transform = 'none';
               cloned.style.animation = 'none';
               // Strip the rounded card chrome so the cream paper
-              // extends to the PDF page corners.
+              // reaches the page edges.
               cloned.classList.remove('rounded-md', 'border', 'border-border');
               cloned.style.borderRadius = '0';
               cloned.style.border = 'none';
-              // Defensive: same wipe on any descendant that might
-              // carry the stagger classes.
               cloned
                 .querySelectorAll('.success-stagger, .success-summary-card')
                 .forEach((node) => {
@@ -2235,10 +2232,63 @@
                 });
             },
           },
-          jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
         };
 
-        html2pdf().set(opts).from(el).save();
+        html2pdf()
+          .set(opts)
+          .from(el)
+          .toCanvas()
+          .then((canvas) => {
+            // html2pdf.js bundles jsPDF as window.jspdf.jsPDF (lowercase
+            // namespace, capital-J inner constructor).
+            const { jsPDF } = window.jspdf;
+            const pageWidth = 8.5;
+            const pageHeight = 11;
+
+            const pdf = new jsPDF({
+              unit: 'in',
+              format: 'letter',
+              orientation: 'portrait',
+            });
+
+            // Fill the whole page with the same cream as the invoice
+            // paper. Any space the scaled image leaves over (e.g. side
+            // gutters for narrow content, or top/bottom for short
+            // invoices) keeps the cream-paper feel.
+            pdf.setFillColor(251, 248, 243); // #fbf8f3
+            pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+
+            // Fit the canvas to the page while preserving aspect ratio.
+            // For a typical invoice (taller than wide), this width-
+            // dominated test fails and we fit by height instead so the
+            // whole thing fits vertically.
+            const canvasAspect = canvas.width / canvas.height;
+            const pageAspect = pageWidth / pageHeight;
+            let imgWidth, imgHeight, x, y;
+            if (canvasAspect > pageAspect) {
+              // Canvas relatively wider than page — fit width.
+              imgWidth = pageWidth;
+              imgHeight = pageWidth / canvasAspect;
+              x = 0;
+              y = (pageHeight - imgHeight) / 2;
+            } else {
+              // Canvas relatively taller than page — fit height.
+              imgHeight = pageHeight;
+              imgWidth = pageHeight * canvasAspect;
+              x = (pageWidth - imgWidth) / 2;
+              y = 0;
+            }
+
+            pdf.addImage(
+              canvas.toDataURL('image/png'),
+              'PNG',
+              x,
+              y,
+              imgWidth,
+              imgHeight
+            );
+            pdf.save(filename);
+          });
       }
 
       // Initial render + listeners.
