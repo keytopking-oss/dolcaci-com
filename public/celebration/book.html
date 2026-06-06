@@ -2059,55 +2059,68 @@
       }
 
       // ===== Download invoice as PDF =====
-      // Uses html2pdf.js (CDN'd above). Captures the #invoice-doc
-      // element as canvas + wraps it in a jsPDF page.
+      // Captures the live #invoice-doc element with html2pdf.js.
       //
-      // IMPORTANT — we clone the element off-DOM before capturing.
-      // Why: the on-screen invoice has the .success-stagger and
-      // .success-summary-card classes, which start at opacity: 0
-      // and animate up via CSS keyframes. html2canvas (the engine
-      // html2pdf uses under the hood) captures the element's *base*
-      // computed style, not the post-animation forwards-fill state.
-      // Without this clone, the resulting PDF page is blank because
-      // the captured invoice has opacity: 0. The clone strips the
-      // animation classes + force-sets opacity: 1 + positions itself
-      // offscreen so html2canvas can measure it cleanly without
-      // affecting the on-screen view.
+      // Root cause of the previous blank-PDF bug: html2canvas clones
+      // the DOM internally before rasterizing. Our invoice element
+      // carries .success-stagger / .success-summary-card classes —
+      // the CSS rule `#checkout-success .success-stagger { opacity: 0 }`
+      // makes the BASE state opacity 0, and a keyframe with `forwards`
+      // fill brings it to 1. html2canvas's internal clone applies the
+      // base rule but doesn't keep the animation's forwards-fill state,
+      // so it captures the invoice at opacity 0 → blank canvas → blank
+      // PDF.
+      //
+      // Fix: html2canvas's `onclone` callback hands us its internal
+      // cloned document RIGHT before rendering. We strip the animation
+      // classes and force opacity: 1 on the cloned invoice. The live
+      // on-screen invoice stays untouched — the animation still plays
+      // for the user.
       function downloadInvoicePdf() {
-        const original = document.getElementById('invoice-doc');
-        const clone = original.cloneNode(true);
-        // Strip the animation classes — they enforce opacity: 0.
-        clone.classList.remove('success-stagger', 'success-summary-card');
-        // Pin offscreen at a fixed width so html2canvas captures a
-        // consistent layout regardless of viewport.
-        clone.style.position = 'absolute';
-        clone.style.left = '-10000px';
-        clone.style.top = '0';
-        clone.style.width = '720px';
-        clone.style.opacity = '1';
-        clone.style.transform = 'none';
-        clone.style.background = '#ffffff';
-        document.body.appendChild(clone);
-
+        const el = document.getElementById('invoice-doc');
         const filename =
           (currentInvoiceNumber || 'celebration-invoice') + '.pdf';
+
         const opts = {
           margin: 0.4,
           filename,
           image: { type: 'jpeg', quality: 0.96 },
-          html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            // Fires after html2canvas has built its internal clone of
+            // the target subtree but BEFORE it rasterizes. Last chance
+            // to normalize the DOM for capture.
+            onclone: (clonedDoc) => {
+              const cloned = clonedDoc.getElementById('invoice-doc');
+              if (!cloned) return;
+              cloned.classList.remove(
+                'success-stagger',
+                'success-summary-card'
+              );
+              cloned.style.opacity = '1';
+              cloned.style.transform = 'none';
+              cloned.style.animation = 'none';
+              // Defensive: also wipe these on any descendants that
+              // might have inherited animation-related classes.
+              cloned
+                .querySelectorAll('.success-stagger, .success-summary-card')
+                .forEach((node) => {
+                  node.classList.remove(
+                    'success-stagger',
+                    'success-summary-card'
+                  );
+                  node.style.opacity = '1';
+                  node.style.transform = 'none';
+                  node.style.animation = 'none';
+                });
+            },
+          },
           jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
         };
 
-        // Always remove the clone, even if save() rejects.
-        const cleanup = () => {
-          if (clone.parentNode) clone.parentNode.removeChild(clone);
-        };
-        html2pdf()
-          .set(opts)
-          .from(clone)
-          .save()
-          .then(cleanup, cleanup);
+        html2pdf().set(opts).from(el).save();
       }
 
       // Initial render + listeners.
