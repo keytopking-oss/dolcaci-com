@@ -2101,23 +2101,13 @@
         document
           .getElementById('packages-balloon')
           .classList.toggle('hidden', cat !== 'balloon');
-        // Clear any selection from the other category, then auto-pick
-        // the first package in this category so summary + checkout
-        // have valid data immediately.
-        document
-          .querySelectorAll('input[name="package"]')
-          .forEach((input) => {
-            if (input.dataset.category !== cat) input.checked = false;
-          });
-        const stillChecked = document.querySelector(
-          'input[name="package"]:checked'
-        );
-        if (!stillChecked) {
-          const firstInCat = document.querySelector(
-            'input[name="package"][data-category="' + cat + '"]'
-          );
-          if (firstInCat) firstInCat.checked = true;
-        }
+        // Clear all package selections — customer should pick the
+        // tier deliberately, not have the first one auto-selected.
+        // goToCheckout() already gates on package selection so
+        // "Continue to checkout" won't fire while none is picked.
+        document.querySelectorAll('input[name="package"]').forEach((input) => {
+          input.checked = false;
+        });
         recompute();
       }
 
