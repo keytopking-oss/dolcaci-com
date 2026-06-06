@@ -396,20 +396,31 @@
           size: letter;
           margin: 0;
         }
+        /* Force cream on html + body + everything tall in the chain
+           so any gap (browser default margin, content shorter than
+           page) shows cream instead of white. */
+        html,
         body.printing-invoice {
           background: #fbf8f3 !important;
           margin: 0 !important;
           padding: 0 !important;
+          height: 100% !important;
         }
         /* Hide every direct child of body EXCEPT the print root. */
         body.printing-invoice > *:not(#invoice-print-root) {
           display: none !important;
         }
+        /* Anchor the print root to full letter page dimensions
+           (8.5 x 11 inches) so it always fills the page no matter
+           how short the content is. min-height: 100vh wasn't
+           reliable across browsers' print rendering. */
         body.printing-invoice #invoice-print-root {
           display: block !important;
           background: #fbf8f3 !important;
-          width: 100%;
-          min-height: 100vh;
+          width: 8.5in;
+          min-height: 11in;
+          margin: 0;
+          padding: 0;
         }
         body.printing-invoice #invoice-print-root #invoice-doc {
           background: #fbf8f3 !important;
@@ -424,9 +435,9 @@
           width: 100%;
           box-sizing: border-box;
         }
-        /* Preserve the terracotta accent bar at the top of the
-           invoice when printing — without -webkit-print-color-
-           adjust most browsers strip backgrounds. */
+        /* Preserve the terracotta accent bar + cream backgrounds
+           when printing — without -webkit-print-color-adjust most
+           browsers strip background colors from print output. */
         body.printing-invoice * {
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
