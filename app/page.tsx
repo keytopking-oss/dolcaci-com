@@ -66,6 +66,31 @@ export default function Home() {
             contact — we&apos;ll respond within a few business days.
           </p>
         </section>
+
+        {/* Sample-work CTA — links to a static brand-site mockup we
+            built for a Long Island event-decor business. Lives under
+            public/celebration/ so it ships with the dolcaci.com deploy.
+            Uses a plain <a> (not next/link) because the destination is
+            a static .html file outside Next.js routing. */}
+        <section className="mt-16 pt-10 border-t border-neutral-300">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
+            Sample work
+          </h2>
+          <p className="mt-4 text-neutral-700">
+            A brand-site mockup built for{' '}
+            <span className="italic">Celebration Creation Decor</span>, a
+            Long Island luxury event styling business.
+          </p>
+          <a
+            href="/celebration/index.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-5 inline-flex items-center gap-2 rounded-lg bg-neutral-900 px-5 py-3 text-sm font-medium text-white hover:bg-neutral-800 transition-colors"
+          >
+            View the mockup
+            <span aria-hidden>→</span>
+          </a>
+        </section>
       </div>
 
       <footer className="border-t border-neutral-300 py-8 px-6 text-sm text-neutral-500">
