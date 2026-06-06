@@ -2131,6 +2131,141 @@
         i.addEventListener('change', recompute)
       );
       recompute();
+
+      // ===== DEMO PREFILL =====
+      // Mockup convenience: every page load, fill every field with
+      // realistic randomized data so Tim (and his aunt) can run the
+      // full booking flow with one click instead of re-typing the
+      // same name + address + card on every demo.
+      //
+      // Pool of 5 Long Island customer profiles — random pick each
+      // load makes the demo feel less rehearsed. Card is Stripe's
+      // canonical test number; expiry + CVC are stable so the modal
+      // validates cleanly. The picked event date is at least 30
+      // days out (clear of the 14-day minimum lead time) and skips
+      // anything in BOOKED_DATES so the calendar doesn't reject it.
+      // Also ticks 2 random add-ons so the order has variety.
+      //
+      // Remove this block when going to production — at that point
+      // customers fill the form for real.
+      function prefillDemoData() {
+        const PROFILES = [
+          {
+            name: 'Sarah Chen',
+            email: 'sarah.chen@example.com',
+            phone: '(631) 555-0142',
+            street: '128 Sound Beach Ave',
+            city: 'Huntington',
+            state: 'NY',
+            zip: '11743',
+          },
+          {
+            name: 'James Park',
+            email: 'james.park@example.com',
+            phone: '(631) 555-0289',
+            street: '47 Bayberry Ln',
+            city: 'Northport',
+            state: 'NY',
+            zip: '11768',
+          },
+          {
+            name: 'Emily Roberts',
+            email: 'emily.roberts@example.com',
+            phone: '(631) 555-0317',
+            street: '88 Harbor Rd',
+            city: 'Sag Harbor',
+            state: 'NY',
+            zip: '11963',
+          },
+          {
+            name: 'Michael Torres',
+            email: 'michael.torres@example.com',
+            phone: '(631) 555-0456',
+            street: '215 Main St',
+            city: 'Port Jefferson',
+            state: 'NY',
+            zip: '11777',
+          },
+          {
+            name: 'Olivia Brooks',
+            email: 'olivia.brooks@example.com',
+            phone: '(516) 555-0578',
+            street: '9 Linden Pl',
+            city: 'Garden City',
+            state: 'NY',
+            zip: '11530',
+          },
+        ];
+        const p = PROFILES[Math.floor(Math.random() * PROFILES.length)];
+
+        // ---- Step 4 — Event details. Fields have no IDs other than
+        // the email one, so we match by distinctive placeholders.
+        const setIfFound = (selector, value) => {
+          const el = document.querySelector(selector);
+          if (el) el.value = value;
+        };
+        setIfFound('input[placeholder="Jane Doe"]', p.name);
+        setIfFound('#event-email', p.email);
+        setIfFound('input[placeholder*="555-5555"]', p.phone);
+        setIfFound('input[type="time"]', '16:00');
+        setIfFound(
+          'input[placeholder*="Backyard"]',
+          'Backyard, ' + p.city + ' ' + p.state
+        );
+
+        // ---- Checkout modal billing + card. The modal is hidden on
+        // page load but the inputs exist in the DOM, so we can populate
+        // them now and they show up the moment goToCheckout() opens it.
+        document.getElementById('checkout-email').value = p.email;
+        document.getElementById('checkout-name').value = p.name;
+        document.getElementById('checkout-street').value = p.street;
+        document.getElementById('checkout-city').value = p.city;
+        document.getElementById('checkout-state').value = p.state;
+        document.getElementById('checkout-zip').value = p.zip;
+
+        // Card = Stripe test number 4242 4242 4242 4242. Dispatch
+        // input so the brand label ("VISA") updates in the corner.
+        const cardEl2 = document.getElementById('checkout-card');
+        cardEl2.value = '4242 4242 4242 4242';
+        cardEl2.dispatchEvent(new Event('input', { bubbles: true }));
+
+        document.getElementById('checkout-expiry').value = '12 / 28';
+        document.getElementById('checkout-cvc').value = '123';
+
+        // ---- Event date: random open date 30-180 days out.
+        // BOOKED_DATES is the hardcoded "this date is taken" array;
+        // skip anything in it. Cap at 100 attempts so the loop can't
+        // run away if every random pick somehow hits a booked date.
+        for (let i = 0; i < 100; i++) {
+          const daysOut = 30 + Math.floor(Math.random() * 150);
+          const candidate = new Date(Date.now() + daysOut * DAY_MS);
+          // YYYY-MM-DD in local time — matches Flatpickr's disable
+          // array format.
+          const ymd =
+            candidate.getFullYear() +
+            '-' +
+            String(candidate.getMonth() + 1).padStart(2, '0') +
+            '-' +
+            String(candidate.getDate()).padStart(2, '0');
+          if (!BOOKED_DATES.includes(ymd)) {
+            // setDate(value, true) triggers the onChange handler,
+            // which updates summary panels via recompute().
+            fp.setDate(ymd, true);
+            break;
+          }
+        }
+
+        // ---- 2 random add-ons so the order has variety.
+        const addonInputs = Array.from(
+          document.querySelectorAll('input[name^="addon-"]')
+        );
+        const shuffled = addonInputs.slice().sort(() => Math.random() - 0.5);
+        shuffled.slice(0, 2).forEach((cb) => {
+          cb.checked = true;
+        });
+        recompute();
+      }
+      prefillDemoData();
     </script>
   </body>
 </html>
