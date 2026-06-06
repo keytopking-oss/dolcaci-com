@@ -1339,145 +1339,241 @@
             </div>
           </div>
 
-          <!-- The actual invoice. This is the element captured by
-               html2pdf.js. Keep all styling inline-friendly (no
-               external classes that change layout under print) and
-               avoid Tailwind classes that depend on viewport state.
-               Custom CSS hooks (.invoice-*) get used by the PDF
-               renderer so we control the print look without
-               clobbering the on-screen look. -->
+          <!-- The actual invoice — designed with brand personality:
+               cream-tinted paper, terracotta accent bar at the top,
+               ornamental dividers, italic Playfair flourishes, and a
+               tilted rubber-stamp PAID badge. This whole element is
+               captured by html2pdf.js for the download — most styling
+               is inline so the captured DOM in html2canvas's clone
+               renders identically to what's on screen. -->
           <div
             id="invoice-doc"
-            class="success-stagger success-summary-card bg-white border border-border rounded-md p-6 md:p-8 text-sm text-ink"
+            class="success-stagger success-summary-card border border-border rounded-md overflow-hidden text-sm text-ink"
+            style="background-color: #fbf8f3;"
           >
-            <!-- Header: wordmark left, INVOICE meta right. -->
-            <div class="flex items-start justify-between gap-6 mb-7">
-              <img
-                src="./text part logo transparent.png"
-                alt="Celebration Creation Decor"
-                class="h-12 md:h-14 w-auto"
-              />
-              <div class="text-right">
-                <p
-                  class="text-[10px] tracking-[0.25em] uppercase text-muted mb-1"
-                >
-                  Invoice
-                </p>
-                <p
-                  class="serif text-xl text-ink leading-none"
-                  id="invoice-number"
-                >
-                  CCD-0001
-                </p>
-                <p class="text-xs text-muted mt-2">
-                  Issued
-                  <span id="invoice-issue-date">June 6, 2026</span>
-                </p>
-              </div>
-            </div>
+            <!-- Terracotta accent bar — runs full-width across the top
+                 like a letterhead seal. Subtle gradient for warmth. -->
+            <div
+              style="
+                height: 5px;
+                background: linear-gradient(
+                  90deg,
+                  #b56a4a 0%,
+                  #c87b5a 35%,
+                  #d39079 60%,
+                  #c87b5a 100%
+                );
+              "
+            ></div>
 
-            <!-- BILL TO + EVENT DATE side by side. -->
-            <div class="grid sm:grid-cols-2 gap-6 mb-7">
-              <div>
-                <p
-                  class="text-[10px] tracking-[0.25em] uppercase font-medium text-terracotta mb-2"
-                >
-                  Bill to
-                </p>
-                <div
-                  id="invoice-bill-to"
-                  class="text-ink leading-relaxed"
-                >
-                  <p class="font-medium">—</p>
+            <div class="p-7 md:p-9">
+              <!-- Header: wordmark left, INVOICE meta right. -->
+              <div class="flex items-start justify-between gap-6">
+                <img
+                  src="./text part logo transparent.png"
+                  alt="Celebration Creation Decor"
+                  class="h-12 md:h-14 w-auto"
+                />
+                <div class="text-right">
+                  <p
+                    class="text-[10px] tracking-[0.3em] uppercase font-medium"
+                    style="color: #c87b5a;"
+                  >
+                    Invoice
+                  </p>
+                  <p
+                    class="serif text-2xl text-ink leading-tight mt-0.5"
+                    id="invoice-number"
+                  >
+                    CCD-0001
+                  </p>
+                  <p class="text-xs text-muted mt-1.5">
+                    Issued
+                    <span id="invoice-issue-date">June 6, 2026</span>
+                  </p>
                 </div>
               </div>
-              <div class="sm:text-right">
-                <p
-                  class="text-[10px] tracking-[0.25em] uppercase font-medium text-terracotta mb-2"
-                >
-                  Event date
-                </p>
-                <p
-                  class="font-medium text-ink"
-                  id="invoice-event-date"
-                >
-                  —
-                </p>
-              </div>
-            </div>
 
-            <!-- Line items table. -->
-            <table class="w-full text-sm mb-5">
-              <thead>
-                <tr class="border-b-2 border-ink/80">
-                  <th
-                    class="text-left py-2 text-[10px] tracking-[0.2em] uppercase font-medium text-muted"
-                  >
-                    Description
-                  </th>
-                  <th
-                    class="text-right py-2 text-[10px] tracking-[0.2em] uppercase font-medium text-muted"
-                  >
-                    Amount
-                  </th>
-                </tr>
-              </thead>
-              <tbody id="invoice-lines">
-                <!-- Injected by renderInvoice() -->
-              </tbody>
-            </table>
-
-            <!-- Totals stack — Total → Deposit paid → Balance due. -->
-            <div
-              class="ml-auto sm:w-2/3 md:w-1/2 space-y-2 text-sm border-t-2 border-ink/80 pt-3"
-            >
-              <div class="flex justify-between text-ink/80">
-                <span>Subtotal</span>
-                <span id="invoice-subtotal">$0</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="serif text-base">Total</span>
-                <span class="serif text-base" id="invoice-total">$0</span>
-              </div>
-              <div
-                class="flex justify-between items-center mt-2 pt-2 border-t border-border"
+              <!-- Italic tagline + ornamental divider. The three diamonds
+                   ◆ are a small editorial flourish — same pattern used
+                   in luxury menus + stationery. -->
+              <p
+                class="serif italic text-sm text-muted mt-2 mb-6"
+                style="letter-spacing: 0.01em;"
               >
-                <span class="text-ink/80">
-                  Deposit received
-                  <span
-                    class="ml-2 inline-block px-2 py-0.5 text-[9px] tracking-[0.2em] uppercase font-semibold rounded-sm text-white"
-                    style="background-color: #1f7a36;"
-                    >Paid</span
-                  >
-                </span>
-                <span class="font-medium" id="invoice-deposit">$0</span>
-              </div>
-              <div class="flex justify-between pt-1">
-                <span class="font-medium text-ink">Balance due</span>
+                Where every celebration becomes a story.
+              </p>
+              <div class="flex items-center gap-4 mb-7">
+                <div
+                  class="flex-1 h-px"
+                  style="background-color: #e8e1d2;"
+                ></div>
                 <span
-                  class="serif text-lg text-terracotta"
-                  id="invoice-balance"
-                  >$0</span
+                  style="color: #c87b5a; font-size: 10px; letter-spacing: 0.5em;"
+                  >◆ ◆ ◆</span
                 >
+                <div
+                  class="flex-1 h-px"
+                  style="background-color: #e8e1d2;"
+                ></div>
               </div>
-              <p class="text-xs text-muted text-right">
-                by <span id="invoice-balance-due-date">—</span>
-              </p>
-            </div>
 
-            <!-- Footer. -->
-            <div
-              class="mt-7 pt-5 border-t border-border text-xs text-muted leading-relaxed"
-            >
-              <p class="mb-2 text-ink/80">
-                Thank you for booking with Celebration Creation Decor.
-              </p>
-              <p>
-                We'll follow up about two weeks before your event with the
-                balance invoice and final coordination details. Questions in
-                the meantime? Reply to the invoice email and we'll be in
-                touch.
-              </p>
+              <!-- BILL TO + EVENT DATE — event date gets serif treatment
+                   to emphasize "this is the centerpiece of your record." -->
+              <div class="grid sm:grid-cols-2 gap-6 mb-8">
+                <div>
+                  <p
+                    class="text-[10px] tracking-[0.3em] uppercase font-semibold mb-2"
+                    style="color: #c87b5a;"
+                  >
+                    Bill to
+                  </p>
+                  <div id="invoice-bill-to" class="text-ink leading-relaxed">
+                    <p class="font-medium">—</p>
+                  </div>
+                </div>
+                <div class="sm:text-right">
+                  <p
+                    class="text-[10px] tracking-[0.3em] uppercase font-semibold mb-2"
+                    style="color: #c87b5a;"
+                  >
+                    Event date
+                  </p>
+                  <p
+                    class="serif text-xl text-ink leading-tight"
+                    id="invoice-event-date"
+                  >
+                    —
+                  </p>
+                </div>
+              </div>
+
+              <!-- Line items table — cream-warm tinted header bar +
+                   row dividers in the soft border color. -->
+              <table
+                class="w-full text-sm mb-5"
+                style="border-collapse: collapse;"
+              >
+                <thead>
+                  <tr style="background-color: #f3ede1;">
+                    <th
+                      class="text-left py-3 px-4 text-[10px] tracking-[0.3em] uppercase font-semibold"
+                      style="color: #c87b5a;"
+                    >
+                      Description
+                    </th>
+                    <th
+                      class="text-right py-3 px-4 text-[10px] tracking-[0.3em] uppercase font-semibold"
+                      style="color: #c87b5a;"
+                    >
+                      Amount
+                    </th>
+                  </tr>
+                </thead>
+                <tbody id="invoice-lines">
+                  <!-- Injected by renderInvoice() -->
+                </tbody>
+              </table>
+
+              <!-- Totals stack — climaxes with the balance due in big
+                   serif terracotta as the visual focal point. -->
+              <div class="ml-auto sm:w-2/3 md:w-1/2 space-y-2 text-sm pt-1">
+                <div class="flex justify-between text-ink/70">
+                  <span>Subtotal</span>
+                  <span id="invoice-subtotal">$0</span>
+                </div>
+                <div
+                  class="flex justify-between items-baseline py-2.5"
+                  style="
+                    border-top: 1px solid #1a1a1a;
+                    border-bottom: 1px solid #1a1a1a;
+                  "
+                >
+                  <span class="serif text-base">Total</span>
+                  <span class="serif text-lg" id="invoice-total">$0</span>
+                </div>
+
+                <!-- Deposit row with the rubber-stamp PAID badge. -->
+                <div class="flex justify-between items-center pt-3">
+                  <div class="flex items-center gap-3">
+                    <span class="text-ink/80">Deposit received</span>
+                    <!-- Tilted double-bordered stamp — looks like a real
+                         rubber stamp pressed onto the paper. Terracotta
+                         outline + terracotta text + slight rotation. -->
+                    <span
+                      style="
+                        display: inline-block;
+                        border: 2px solid #c87b5a;
+                        outline: 1px solid #c87b5a;
+                        outline-offset: 2px;
+                        color: #c87b5a;
+                        font-weight: 700;
+                        font-size: 10px;
+                        letter-spacing: 0.35em;
+                        padding: 3px 9px 3px 12px;
+                        transform: rotate(-6deg);
+                        border-radius: 3px;
+                        font-family: Inter, system-ui, sans-serif;
+                      "
+                      >PAID</span
+                    >
+                  </div>
+                  <span class="font-medium" id="invoice-deposit">$0</span>
+                </div>
+
+                <!-- Balance due block — climax of the totals stack. -->
+                <div
+                  class="flex justify-between items-baseline pt-3 mt-1"
+                  style="border-top: 1px dashed #d9cfb8;"
+                >
+                  <span class="font-medium text-ink">Balance due</span>
+                  <span
+                    class="serif text-2xl"
+                    id="invoice-balance"
+                    style="color: #c87b5a;"
+                    >$0</span
+                  >
+                </div>
+                <p class="text-xs text-muted text-right">
+                  by <span id="invoice-balance-due-date">—</span>
+                </p>
+              </div>
+
+              <!-- Ornamental footer divider. -->
+              <div class="flex items-center gap-4 mt-10 mb-5">
+                <div
+                  class="flex-1 h-px"
+                  style="background-color: #e8e1d2;"
+                ></div>
+                <span
+                  style="color: #c87b5a; font-size: 9px; letter-spacing: 0.5em;"
+                  >◆</span
+                >
+                <div
+                  class="flex-1 h-px"
+                  style="background-color: #e8e1d2;"
+                ></div>
+              </div>
+
+              <!-- Footer — italic serif "Thank you" as the headline +
+                   tight fine print + handwritten-style sign-off. -->
+              <div class="text-xs text-muted leading-relaxed">
+                <p class="serif italic text-base text-ink mb-3">
+                  Thank you for booking with us.
+                </p>
+                <p>
+                  We'll follow up about two weeks before your event with the
+                  balance invoice and final coordination details. Questions in
+                  the meantime? Reply to the invoice email — we'll be right
+                  with you.
+                </p>
+                <p
+                  class="serif italic text-sm mt-5 text-right"
+                  style="color: #c87b5a;"
+                >
+                  — Celebration Creation Decor
+                </p>
+              </div>
             </div>
           </div>
 
@@ -2003,17 +2099,27 @@
           selectedEventDate ? formatPretty(selectedEventDate) : '—';
 
         // Line items — package row first, then each ticked add-on.
+        // Padding-x matches the tinted header (px-4) so the columns
+        // align visually. Bottom border in a softer color than the
+        // header's terracotta accent so the eye flows down the list.
         const linesEl = document.getElementById('invoice-lines');
+        const rowStyle =
+          'border-bottom: 1px solid #ece5d2;';
         const rows = [
-          `<tr class="border-b border-border">
-             <td class="py-3 text-ink">${pkgLabel}</td>
-             <td class="py-3 text-right text-ink">${fmt(pkgPrice)}</td>
+          `<tr style="${rowStyle}">
+             <td class="py-3 px-4 text-ink">${pkgLabel}</td>
+             <td class="py-3 px-4 text-right text-ink font-medium">${fmt(
+               pkgPrice
+             )}</td>
            </tr>`,
           ...addons.map(
             (a) => `
-            <tr class="border-b border-border">
-              <td class="py-3 text-ink/80">+ ${a.dataset.label}</td>
-              <td class="py-3 text-right text-ink/80">${fmt(
+            <tr style="${rowStyle}">
+              <td class="py-3 px-4 text-ink/75">
+                <span style="color: #c87b5a; font-weight: 600;">+</span>
+                ${a.dataset.label}
+              </td>
+              <td class="py-3 px-4 text-right text-ink/80">${fmt(
                 Number(a.dataset.price)
               )}</td>
             </tr>
