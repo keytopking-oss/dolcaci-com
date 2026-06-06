@@ -82,6 +82,21 @@
         font-family: 'Playfair Display', serif;
       }
 
+      /* Service-tile (Luxury Picnic / Balloon Artistry) styling.
+         Reveals the matching package grid below when clicked. */
+      .service-tile {
+        cursor: pointer;
+      }
+      .service-tile:hover {
+        border-color: #c87b5a;
+        transform: translateY(-2px);
+      }
+      .service-tile.selected {
+        border-color: #c87b5a;
+        background-color: #fdf9f4;
+        box-shadow: 0 8px 24px -8px rgba(200, 123, 90, 0.25);
+      }
+
       /* Package card radio-as-card styling. */
       input[name='package'] {
         position: absolute;
@@ -569,12 +584,11 @@
         <h1
           class="serif text-3xl md:text-5xl leading-[1.1] tracking-tight max-w-3xl"
         >
-          Build your <span class="italic">luxury picnic</span>.
+          Build your <span class="italic">event</span>.
         </h1>
         <p class="mt-5 text-ink/70 max-w-2xl text-base leading-relaxed">
-          Pick a base setup, add the extras you want, share the details. We
-          set everything up before you arrive and break it down after — you
-          just show up.
+          Pick a service, then the package, then the extras you want.
+          We handle setup + breakdown — you just show up.
         </p>
       </div>
     </section>
@@ -626,175 +640,492 @@
             </div>
           </section>
 
-          <!-- STEP 2: PACKAGE -->
+          <!-- STEP 2: SERVICE + PACKAGE
+               Two-stage selector: pick a service (Luxury Picnic /
+               Balloon Artistry) first; the matching package tier
+               grid reveals below. Switching service resets the
+               package selection cleanly. -->
           <section class="mb-14 md:mb-20">
             <div class="flex items-baseline gap-4 mb-7">
               <span class="step-num">02</span>
               <h2 class="serif text-2xl md:text-3xl tracking-tight">
-                Pick your package
+                Pick your service
               </h2>
             </div>
 
-            <div class="grid sm:grid-cols-2 gap-4">
-              <!-- Package: Sweet Setup -->
-              <label class="block relative">
-                <input
-                  type="radio"
-                  name="package"
-                  value="sweet"
-                  data-price="250"
-                  data-label="Sweet Setup"
-                  data-guests="2"
-                />
-                <div class="package-card p-6 rounded-md h-full bg-cream">
-                  <div class="flex items-start justify-between mb-3">
-                    <div>
-                      <p class="serif text-xl tracking-tight">
-                        Sweet Setup
-                      </p>
-                      <p class="text-xs text-muted mt-1 uppercase tracking-[0.18em]">
-                        2 guests · 2 hours
-                      </p>
-                    </div>
-                    <div
-                      class="pkg-check w-6 h-6 rounded-full border-1.5 border-border flex items-center justify-center mt-1"
-                    >
-                      <svg class="w-3.5 h-3.5 text-cream" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M7.629 13.314l7.071-7.07 1.414 1.413-8.485 8.486-4.95-4.95 1.415-1.414 3.535 3.535z"/>
-                      </svg>
-                    </div>
-                  </div>
-                  <p class="serif text-3xl text-ink mt-1 mb-4">$250</p>
-                  <ul class="text-sm text-ink/70 space-y-1.5 leading-relaxed">
-                    <li>Low cedar table, vintage rug</li>
-                    <li>Tablescape styling for 2</li>
-                    <li>Florals + taper candles</li>
-                    <li>Bluetooth speaker</li>
-                  </ul>
-                </div>
-              </label>
+            <!-- Service tiles. Buttons (not radios) since selecting
+                 one shows a different grid; the package radios
+                 below are the actual form values. -->
+            <div class="grid sm:grid-cols-2 gap-4 mb-8" id="service-tiles">
+              <button
+                type="button"
+                class="service-tile p-6 rounded-md bg-cream border border-border text-left transition-all"
+                data-category="picnic"
+                onclick="selectCategory('picnic')"
+              >
+                <p class="serif text-2xl tracking-tight">Luxury Picnic</p>
+                <p
+                  class="text-[10px] uppercase tracking-[0.25em] text-muted mt-1"
+                >
+                  Tablescapes · Florals · Ambiance
+                </p>
+                <p class="text-sm text-ink/70 mt-3 leading-relaxed">
+                  Curated outdoor setups for intimate gatherings + statement
+                  events. Cedar tables, layered cushions, floral centerpieces.
+                </p>
+                <p class="text-xs text-terracotta mt-4 font-medium">
+                  From $250 →
+                </p>
+              </button>
+              <button
+                type="button"
+                class="service-tile p-6 rounded-md bg-cream border border-border text-left transition-all"
+                data-category="balloon"
+                onclick="selectCategory('balloon')"
+              >
+                <p class="serif text-2xl tracking-tight">Balloon Artistry</p>
+                <p
+                  class="text-[10px] uppercase tracking-[0.25em] text-muted mt-1"
+                >
+                  Arches · Garlands · Installations
+                </p>
+                <p class="text-sm text-ink/70 mt-3 leading-relaxed">
+                  Sculptural balloon designs for birthdays, showers, weddings,
+                  + brand activations. Custom color stories, organic shapes.
+                </p>
+                <p class="text-xs text-terracotta mt-4 font-medium">
+                  From $200 →
+                </p>
+              </button>
+            </div>
 
-              <!-- Package: The Standard -->
-              <label class="block relative">
-                <input
-                  type="radio"
-                  name="package"
-                  value="standard"
-                  data-price="375"
-                  data-label="The Standard"
-                  data-guests="4"
-                  checked
-                />
-                <div class="package-card p-6 rounded-md h-full bg-cream">
-                  <div class="flex items-start justify-between mb-3">
-                    <div>
-                      <p class="serif text-xl tracking-tight">
-                        The Standard
-                        <span
-                          class="ml-1 text-[10px] uppercase tracking-[0.2em] text-terracotta align-middle"
-                          >Most popular</span
+            <!-- Prompt before a category is picked. Hidden once a
+                 service tile is clicked. -->
+            <p
+              id="package-prompt"
+              class="text-sm text-muted italic text-center py-6"
+            >
+              ↑ Pick a service above to see package tiers.
+            </p>
+
+            <!-- ===== LUXURY PICNIC PACKAGES ===== -->
+            <div id="packages-picnic" class="hidden">
+              <p
+                class="text-xs uppercase tracking-[0.3em] text-terracotta font-semibold mb-5"
+              >
+                Luxury Picnic · Package tiers
+              </p>
+              <div class="grid sm:grid-cols-2 gap-4">
+                <!-- Package: Sweet Setup -->
+                <label class="block relative">
+                  <input
+                    type="radio"
+                    name="package"
+                    value="sweet"
+                    data-price="250"
+                    data-label="Sweet Setup"
+                    data-guests="2"
+                    data-category="picnic"
+                  />
+                  <div class="package-card p-6 rounded-md h-full bg-cream">
+                    <div class="flex items-start justify-between mb-3">
+                      <div>
+                        <p class="serif text-xl tracking-tight">Sweet Setup</p>
+                        <p
+                          class="text-xs text-muted mt-1 uppercase tracking-[0.18em]"
                         >
-                      </p>
-                      <p class="text-xs text-muted mt-1 uppercase tracking-[0.18em]">
-                        4 guests · 3 hours
-                      </p>
+                          2 guests · 2 hours
+                        </p>
+                      </div>
+                      <div
+                        class="pkg-check w-6 h-6 rounded-full border-1.5 border-border flex items-center justify-center mt-1"
+                      >
+                        <svg
+                          class="w-3.5 h-3.5 text-cream"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            d="M7.629 13.314l7.071-7.07 1.414 1.413-8.485 8.486-4.95-4.95 1.415-1.414 3.535 3.535z"
+                          />
+                        </svg>
+                      </div>
                     </div>
-                    <div
-                      class="pkg-check w-6 h-6 rounded-full border-1.5 border-border flex items-center justify-center mt-1"
+                    <p class="serif text-3xl text-ink mt-1 mb-4">$250</p>
+                    <ul
+                      class="text-sm text-ink/70 space-y-1.5 leading-relaxed"
                     >
-                      <svg class="w-3.5 h-3.5 text-cream" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M7.629 13.314l7.071-7.07 1.414 1.413-8.485 8.486-4.95-4.95 1.415-1.414 3.535 3.535z"/>
-                      </svg>
-                    </div>
+                      <li>Low cedar table, vintage rug</li>
+                      <li>Tablescape styling for 2</li>
+                      <li>Florals + taper candles</li>
+                      <li>Bluetooth speaker</li>
+                    </ul>
                   </div>
-                  <p class="serif text-3xl text-ink mt-1 mb-4">$375</p>
-                  <ul class="text-sm text-ink/70 space-y-1.5 leading-relaxed">
-                    <li>Everything in Sweet Setup</li>
-                    <li>Seating for 4 with layered cushions</li>
-                    <li>Larger floral arrangement</li>
-                    <li>Welcome sign with custom names</li>
-                    <li>Lanterns + extra ambient lighting</li>
-                  </ul>
-                </div>
-              </label>
+                </label>
 
-              <!-- Package: The Soirée -->
-              <label class="block relative">
-                <input
-                  type="radio"
-                  name="package"
-                  value="soiree"
-                  data-price="500"
-                  data-label="The Soirée"
-                  data-guests="6"
-                />
-                <div class="package-card p-6 rounded-md h-full bg-cream">
-                  <div class="flex items-start justify-between mb-3">
-                    <div>
-                      <p class="serif text-xl tracking-tight">
-                        The Soirée
-                      </p>
-                      <p class="text-xs text-muted mt-1 uppercase tracking-[0.18em]">
-                        6 guests · 3 hours
-                      </p>
+                <!-- Package: The Standard -->
+                <label class="block relative">
+                  <input
+                    type="radio"
+                    name="package"
+                    value="standard"
+                    data-price="375"
+                    data-label="The Standard"
+                    data-guests="4"
+                    data-category="picnic"
+                  />
+                  <div class="package-card p-6 rounded-md h-full bg-cream">
+                    <div class="flex items-start justify-between mb-3">
+                      <div>
+                        <p class="serif text-xl tracking-tight">
+                          The Standard
+                          <span
+                            class="ml-1 text-[10px] uppercase tracking-[0.2em] text-terracotta align-middle"
+                            >Most popular</span
+                          >
+                        </p>
+                        <p
+                          class="text-xs text-muted mt-1 uppercase tracking-[0.18em]"
+                        >
+                          4 guests · 3 hours
+                        </p>
+                      </div>
+                      <div
+                        class="pkg-check w-6 h-6 rounded-full border-1.5 border-border flex items-center justify-center mt-1"
+                      >
+                        <svg
+                          class="w-3.5 h-3.5 text-cream"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            d="M7.629 13.314l7.071-7.07 1.414 1.413-8.485 8.486-4.95-4.95 1.415-1.414 3.535 3.535z"
+                          />
+                        </svg>
+                      </div>
                     </div>
-                    <div
-                      class="pkg-check w-6 h-6 rounded-full border-1.5 border-border flex items-center justify-center mt-1"
+                    <p class="serif text-3xl text-ink mt-1 mb-4">$375</p>
+                    <ul
+                      class="text-sm text-ink/70 space-y-1.5 leading-relaxed"
                     >
-                      <svg class="w-3.5 h-3.5 text-cream" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M7.629 13.314l7.071-7.07 1.414 1.413-8.485 8.486-4.95-4.95 1.415-1.414 3.535 3.535z"/>
-                      </svg>
-                    </div>
+                      <li>Everything in Sweet Setup</li>
+                      <li>Seating for 4 with layered cushions</li>
+                      <li>Larger floral arrangement</li>
+                      <li>Welcome sign with custom names</li>
+                      <li>Lanterns + extra ambient lighting</li>
+                    </ul>
                   </div>
-                  <p class="serif text-3xl text-ink mt-1 mb-4">$500</p>
-                  <ul class="text-sm text-ink/70 space-y-1.5 leading-relaxed">
-                    <li>Everything in The Standard</li>
-                    <li>Seating for 6, premium cushions</li>
-                    <li>Dual floral centerpieces</li>
-                    <li>Pampas grass photo backdrop</li>
-                    <li>Curated playlist + speaker</li>
-                  </ul>
-                </div>
-              </label>
+                </label>
 
-              <!-- Package: Grande Gathering -->
-              <label class="block relative">
-                <input
-                  type="radio"
-                  name="package"
-                  value="grande"
-                  data-price="750"
-                  data-label="Grande Gathering"
-                  data-guests="10"
-                />
-                <div class="package-card p-6 rounded-md h-full bg-cream">
-                  <div class="flex items-start justify-between mb-3">
-                    <div>
-                      <p class="serif text-xl tracking-tight">
-                        Grande Gathering
-                      </p>
-                      <p class="text-xs text-muted mt-1 uppercase tracking-[0.18em]">
-                        8–10 guests · 4 hours
-                      </p>
+                <!-- Package: The Soirée -->
+                <label class="block relative">
+                  <input
+                    type="radio"
+                    name="package"
+                    value="soiree"
+                    data-price="500"
+                    data-label="The Soirée"
+                    data-guests="6"
+                    data-category="picnic"
+                  />
+                  <div class="package-card p-6 rounded-md h-full bg-cream">
+                    <div class="flex items-start justify-between mb-3">
+                      <div>
+                        <p class="serif text-xl tracking-tight">The Soirée</p>
+                        <p
+                          class="text-xs text-muted mt-1 uppercase tracking-[0.18em]"
+                        >
+                          6 guests · 3 hours
+                        </p>
+                      </div>
+                      <div
+                        class="pkg-check w-6 h-6 rounded-full border-1.5 border-border flex items-center justify-center mt-1"
+                      >
+                        <svg
+                          class="w-3.5 h-3.5 text-cream"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            d="M7.629 13.314l7.071-7.07 1.414 1.413-8.485 8.486-4.95-4.95 1.415-1.414 3.535 3.535z"
+                          />
+                        </svg>
+                      </div>
                     </div>
-                    <div
-                      class="pkg-check w-6 h-6 rounded-full border-1.5 border-border flex items-center justify-center mt-1"
+                    <p class="serif text-3xl text-ink mt-1 mb-4">$500</p>
+                    <ul
+                      class="text-sm text-ink/70 space-y-1.5 leading-relaxed"
                     >
-                      <svg class="w-3.5 h-3.5 text-cream" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M7.629 13.314l7.071-7.07 1.414 1.413-8.485 8.486-4.95-4.95 1.415-1.414 3.535 3.535z"/>
-                      </svg>
-                    </div>
+                      <li>Everything in The Standard</li>
+                      <li>Seating for 6, premium cushions</li>
+                      <li>Dual floral centerpieces</li>
+                      <li>Pampas grass photo backdrop</li>
+                      <li>Curated playlist + speaker</li>
+                    </ul>
                   </div>
-                  <p class="serif text-3xl text-ink mt-1 mb-4">$750</p>
-                  <ul class="text-sm text-ink/70 space-y-1.5 leading-relaxed">
-                    <li>Everything in The Soirée</li>
-                    <li>Extended table + seating for 10</li>
-                    <li>Premium florals + dried garlands</li>
-                    <li>Backdrop with custom marquee letters</li>
-                    <li>Full styling, setup, and break-down</li>
-                  </ul>
-                </div>
-              </label>
+                </label>
+
+                <!-- Package: Grande Gathering -->
+                <label class="block relative">
+                  <input
+                    type="radio"
+                    name="package"
+                    value="grande"
+                    data-price="750"
+                    data-label="Grande Gathering"
+                    data-guests="10"
+                    data-category="picnic"
+                  />
+                  <div class="package-card p-6 rounded-md h-full bg-cream">
+                    <div class="flex items-start justify-between mb-3">
+                      <div>
+                        <p class="serif text-xl tracking-tight">
+                          Grande Gathering
+                        </p>
+                        <p
+                          class="text-xs text-muted mt-1 uppercase tracking-[0.18em]"
+                        >
+                          8–10 guests · 4 hours
+                        </p>
+                      </div>
+                      <div
+                        class="pkg-check w-6 h-6 rounded-full border-1.5 border-border flex items-center justify-center mt-1"
+                      >
+                        <svg
+                          class="w-3.5 h-3.5 text-cream"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            d="M7.629 13.314l7.071-7.07 1.414 1.413-8.485 8.486-4.95-4.95 1.415-1.414 3.535 3.535z"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                    <p class="serif text-3xl text-ink mt-1 mb-4">$750</p>
+                    <ul
+                      class="text-sm text-ink/70 space-y-1.5 leading-relaxed"
+                    >
+                      <li>Everything in The Soirée</li>
+                      <li>Extended table + seating for 10</li>
+                      <li>Premium florals + dried garlands</li>
+                      <li>Backdrop with custom marquee letters</li>
+                      <li>Full styling, setup, and break-down</li>
+                    </ul>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- ===== BALLOON ARTISTRY PACKAGES ===== -->
+            <div id="packages-balloon" class="hidden">
+              <p
+                class="text-xs uppercase tracking-[0.3em] text-terracotta font-semibold mb-5"
+              >
+                Balloon Artistry · Package tiers
+              </p>
+              <div class="grid sm:grid-cols-2 gap-4">
+                <!-- Package: The Pop -->
+                <label class="block relative">
+                  <input
+                    type="radio"
+                    name="package"
+                    value="pop"
+                    data-price="200"
+                    data-label="The Pop"
+                    data-guests="garland"
+                    data-category="balloon"
+                  />
+                  <div class="package-card p-6 rounded-md h-full bg-cream">
+                    <div class="flex items-start justify-between mb-3">
+                      <div>
+                        <p class="serif text-xl tracking-tight">The Pop</p>
+                        <p
+                          class="text-xs text-muted mt-1 uppercase tracking-[0.18em]"
+                        >
+                          5–6 ft garland
+                        </p>
+                      </div>
+                      <div
+                        class="pkg-check w-6 h-6 rounded-full border-1.5 border-border flex items-center justify-center mt-1"
+                      >
+                        <svg
+                          class="w-3.5 h-3.5 text-cream"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            d="M7.629 13.314l7.071-7.07 1.414 1.413-8.485 8.486-4.95-4.95 1.415-1.414 3.535 3.535z"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                    <p class="serif text-3xl text-ink mt-1 mb-4">$200</p>
+                    <ul
+                      class="text-sm text-ink/70 space-y-1.5 leading-relaxed"
+                    >
+                      <li>Petite garland on table or wall</li>
+                      <li>Two-color palette</li>
+                      <li>Indoor or outdoor</li>
+                      <li>Setup + teardown</li>
+                    </ul>
+                  </div>
+                </label>
+
+                <!-- Package: The Arch -->
+                <label class="block relative">
+                  <input
+                    type="radio"
+                    name="package"
+                    value="arch"
+                    data-price="400"
+                    data-label="The Arch"
+                    data-guests="8 ft arch"
+                    data-category="balloon"
+                  />
+                  <div class="package-card p-6 rounded-md h-full bg-cream">
+                    <div class="flex items-start justify-between mb-3">
+                      <div>
+                        <p class="serif text-xl tracking-tight">
+                          The Arch
+                          <span
+                            class="ml-1 text-[10px] uppercase tracking-[0.2em] text-terracotta align-middle"
+                            >Most popular</span
+                          >
+                        </p>
+                        <p
+                          class="text-xs text-muted mt-1 uppercase tracking-[0.18em]"
+                        >
+                          8 ft arch
+                        </p>
+                      </div>
+                      <div
+                        class="pkg-check w-6 h-6 rounded-full border-1.5 border-border flex items-center justify-center mt-1"
+                      >
+                        <svg
+                          class="w-3.5 h-3.5 text-cream"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            d="M7.629 13.314l7.071-7.07 1.414 1.413-8.485 8.486-4.95-4.95 1.415-1.414 3.535 3.535z"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                    <p class="serif text-3xl text-ink mt-1 mb-4">$400</p>
+                    <ul
+                      class="text-sm text-ink/70 space-y-1.5 leading-relaxed"
+                    >
+                      <li>Full balloon arch (entryway or backdrop)</li>
+                      <li>Three-color custom palette</li>
+                      <li>Greenery + dried floral accents</li>
+                      <li>Photo-ready feature wall</li>
+                      <li>Setup + teardown</li>
+                    </ul>
+                  </div>
+                </label>
+
+                <!-- Package: The Statement -->
+                <label class="block relative">
+                  <input
+                    type="radio"
+                    name="package"
+                    value="statement"
+                    data-price="700"
+                    data-label="The Statement"
+                    data-guests="12 ft installation"
+                    data-category="balloon"
+                  />
+                  <div class="package-card p-6 rounded-md h-full bg-cream">
+                    <div class="flex items-start justify-between mb-3">
+                      <div>
+                        <p class="serif text-xl tracking-tight">
+                          The Statement
+                        </p>
+                        <p
+                          class="text-xs text-muted mt-1 uppercase tracking-[0.18em]"
+                        >
+                          12 ft installation
+                        </p>
+                      </div>
+                      <div
+                        class="pkg-check w-6 h-6 rounded-full border-1.5 border-border flex items-center justify-center mt-1"
+                      >
+                        <svg
+                          class="w-3.5 h-3.5 text-cream"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            d="M7.629 13.314l7.071-7.07 1.414 1.413-8.485 8.486-4.95-4.95 1.415-1.414 3.535 3.535z"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                    <p class="serif text-3xl text-ink mt-1 mb-4">$700</p>
+                    <ul
+                      class="text-sm text-ink/70 space-y-1.5 leading-relaxed"
+                    >
+                      <li>Everything in The Arch</li>
+                      <li>Premium florals woven in</li>
+                      <li>Custom organic shapes (hearts, numbers)</li>
+                      <li>Hand-lettered signage option</li>
+                      <li>Full styling + setup + teardown</li>
+                    </ul>
+                  </div>
+                </label>
+
+                <!-- Package: The Showstopper -->
+                <label class="block relative">
+                  <input
+                    type="radio"
+                    name="package"
+                    value="showstopper"
+                    data-price="1200"
+                    data-label="The Showstopper"
+                    data-guests="full event design"
+                    data-category="balloon"
+                  />
+                  <div class="package-card p-6 rounded-md h-full bg-cream">
+                    <div class="flex items-start justify-between mb-3">
+                      <div>
+                        <p class="serif text-xl tracking-tight">
+                          The Showstopper
+                        </p>
+                        <p
+                          class="text-xs text-muted mt-1 uppercase tracking-[0.18em]"
+                        >
+                          Full event design
+                        </p>
+                      </div>
+                      <div
+                        class="pkg-check w-6 h-6 rounded-full border-1.5 border-border flex items-center justify-center mt-1"
+                      >
+                        <svg
+                          class="w-3.5 h-3.5 text-cream"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            d="M7.629 13.314l7.071-7.07 1.414 1.413-8.485 8.486-4.95-4.95 1.415-1.414 3.535 3.535z"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                    <p class="serif text-3xl text-ink mt-1 mb-4">$1,200</p>
+                    <ul
+                      class="text-sm text-ink/70 space-y-1.5 leading-relaxed"
+                    >
+                      <li>Everything in The Statement</li>
+                      <li>Multi-piece balloon design</li>
+                      <li>Ceiling installation option</li>
+                      <li>Premium florals + custom signage</li>
+                      <li>On-site attendant during event</li>
+                    </ul>
+                  </div>
+                </label>
+              </div>
             </div>
           </section>
 
@@ -1742,6 +2073,47 @@
         );
       }
 
+      // ===== Service category picker =====
+      // Toggles between Luxury Picnic and Balloon Artistry package
+      // grids. Switching categories clears any prior package selection
+      // (so a Balloon package can't carry over into a Picnic invoice).
+      // Auto-selects the FIRST package in the new category so the
+      // summary panel + checkout always have something to show.
+      function selectCategory(cat) {
+        // Update tile visual state.
+        document.querySelectorAll('.service-tile').forEach((t) => {
+          t.classList.toggle('selected', t.dataset.category === cat);
+        });
+        // Hide the prompt now that a category exists.
+        const promptEl = document.getElementById('package-prompt');
+        if (promptEl) promptEl.classList.add('hidden');
+        // Show only the matching package grid.
+        document
+          .getElementById('packages-picnic')
+          .classList.toggle('hidden', cat !== 'picnic');
+        document
+          .getElementById('packages-balloon')
+          .classList.toggle('hidden', cat !== 'balloon');
+        // Clear any selection from the other category, then auto-pick
+        // the first package in this category so summary + checkout
+        // have valid data immediately.
+        document
+          .querySelectorAll('input[name="package"]')
+          .forEach((input) => {
+            if (input.dataset.category !== cat) input.checked = false;
+          });
+        const stillChecked = document.querySelector(
+          'input[name="package"]:checked'
+        );
+        if (!stillChecked) {
+          const firstInCat = document.querySelector(
+            'input[name="package"][data-category="' + cat + '"]'
+          );
+          if (firstInCat) firstInCat.checked = true;
+        }
+        recompute();
+      }
+
       // Balance due date = event date - 14 days. If no event date is
       // picked yet, returns null (summary shows "—" placeholder).
       function getBalanceDueDate() {
@@ -1925,6 +2297,15 @@
         if (!selectedEventDate) {
           dateInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
           fp.open();
+          return;
+        }
+        // Also gate on having a service + package picked — otherwise
+        // we'd be charging a $0 deposit on nothing.
+        if (!getSelectedPackage()) {
+          document.getElementById('service-tiles').scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
           return;
         }
 
@@ -2447,6 +2828,25 @@
             fp.setDate(ymd, true);
             break;
           }
+        }
+
+        // ---- Random service category + random package within it.
+        // Demo variety: each refresh might show a Luxury Picnic
+        // booking or a Balloon Artistry one. selectCategory() handles
+        // showing the right grid + auto-picking the first package;
+        // we then override that with a random package in the same
+        // category so the demo doesn't always land on the first tier.
+        const cat = Math.random() < 0.5 ? 'picnic' : 'balloon';
+        selectCategory(cat);
+        const pkgsInCat = Array.from(
+          document.querySelectorAll(
+            'input[name="package"][data-category="' + cat + '"]'
+          )
+        );
+        if (pkgsInCat.length) {
+          pkgsInCat.forEach((p) => (p.checked = false));
+          pkgsInCat[Math.floor(Math.random() * pkgsInCat.length)].checked =
+            true;
         }
 
         // ---- 2 random add-ons so the order has variety.
