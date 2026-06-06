@@ -48,13 +48,15 @@
     />
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
 
-    <!-- html2pdf.js — turns the rendered invoice DOM into a real PDF
-         download. Lets the customer save / print / forward their
-         booking confirmation. Client-side only; no backend needed.
-         IMPORTANT: html2pdf.bundle does NOT expose jsPDF on window —
-         it's bundled internally. We need a separate jsPDF script for
-         the custom-page-fit logic in downloadInvoicePdf(). -->
-    <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+    <!-- PDF stack — three pieces:
+         - html2canvas — turns the DOM into a canvas
+         - jsPDF       — builds the PDF page and accepts the canvas
+         html2pdf.js wraps both into one auto-paginating call but
+         doesn't expose either constructor on window (their globals
+         live inside the bundle). For the custom single-page fit
+         logic we use html2canvas + jsPDF directly. Two small extra
+         downloads (~50KB total) but the code is far simpler. -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
     <style>
@@ -2186,27 +2188,38 @@
       // classes and force opacity: 1 on the cloned invoice. The live
       // on-screen invoice stays untouched — the animation still plays
       // for the user.
+      // Builds a single-page letter-sized PDF of the invoice.
+      // Capture pipeline: html2canvas → jsPDF.addImage with scale-to-fit
+      // math so the whole invoice always lands on page 1 regardless of
+      // how many add-ons were ticked. PDF page is filled cream so any
+      // gutter pixels around the scaled image blend with the paper.
       function downloadInvoicePdf() {
         const el = document.getElementById('invoice-doc');
         const filename =
           (currentInvoiceNumber || 'celebration-invoice') + '.pdf';
 
-        // Capture the invoice to a canvas, then manually build the
-        // jsPDF page so we can scale-to-fit on a single letter page.
-        // html2pdf's default behavior paginates a too-tall canvas into
-        // multiple pages — fine for a contract but ugly for an
-        // invoice. The fit-to-page logic below guarantees the whole
-        // invoice always lands on one page regardless of how many
-        // add-ons were ticked. Any leftover gutters on the page are
-        // filled with the same cream as the invoice paper so the
-        // visual is seamless.
-        const opts = {
-          margin: 0,
-          image: { type: 'png' }, // PNG = lossless cream — no JPEG drift
-          html2canvas: {
+        // Resolve constructors — bail loudly if either CDN didn't load.
+        const jsPDFCtor =
+          (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+        if (!jsPDFCtor || !window.html2canvas) {
+          console.error(
+            'downloadInvoicePdf: missing library —',
+            'jsPDF=', !!jsPDFCtor,
+            'html2canvas=', !!window.html2canvas
+          );
+          alert(
+            'Sorry — the PDF library didn’t load. Reload and try again.'
+          );
+          return;
+        }
+
+        window
+          .html2canvas(el, {
             scale: 2,
             useCORS: true,
             backgroundColor: '#fbf8f3',
+            // Fired against html2canvas's internal cloned document —
+            // last chance to normalize the DOM before rasterization.
             onclone: (clonedDoc) => {
               const cloned = clonedDoc.getElementById('invoice-doc');
               if (!cloned) return;
@@ -2220,44 +2233,15 @@
               cloned.style.animation = 'none';
               // Strip the rounded card chrome so the cream paper
               // reaches the page edges.
-              cloned.classList.remove('rounded-md', 'border', 'border-border');
+              cloned.classList.remove(
+                'rounded-md',
+                'border',
+                'border-border'
+              );
               cloned.style.borderRadius = '0';
               cloned.style.border = 'none';
-              cloned
-                .querySelectorAll('.success-stagger, .success-summary-card')
-                .forEach((node) => {
-                  node.classList.remove(
-                    'success-stagger',
-                    'success-summary-card'
-                  );
-                  node.style.opacity = '1';
-                  node.style.transform = 'none';
-                  node.style.animation = 'none';
-                });
             },
-          },
-        };
-
-        // Resolve jsPDF constructor — separate CDN exposes
-        // window.jspdf.jsPDF (lowercase namespace, capital-J inner).
-        // Bail loudly if the script didn't load so a silent click
-        // never goes unnoticed.
-        const jsPDFCtor =
-          (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
-        if (!jsPDFCtor) {
-          console.error(
-            'downloadInvoicePdf: jsPDF not loaded — check CDN script tag.'
-          );
-          alert(
-            'Sorry — the PDF library didn’t load. Reload the page and try again.'
-          );
-          return;
-        }
-
-        html2pdf()
-          .set(opts)
-          .from(el)
-          .toCanvas()
+          })
           .then((canvas) => {
             const pageWidth = 8.5;
             const pageHeight = 11;
@@ -2268,16 +2252,13 @@
               orientation: 'portrait',
             });
 
-            // Fill the whole page with the same cream as the invoice
-            // paper. Any space the scaled image leaves over (e.g. side
-            // gutters for narrow content, or top/bottom for short
-            // invoices) keeps the cream-paper feel.
+            // Fill the whole page cream so any leftover gutter blends
+            // with the invoice paper itself.
             pdf.setFillColor(251, 248, 243); // #fbf8f3
             pdf.rect(0, 0, pageWidth, pageHeight, 'F');
 
             // Fit the canvas to the page while preserving aspect ratio.
-            // Typical invoice is taller than wide so the else-branch
-            // triggers; very short invoices use the if-branch.
+            // Typical invoice is taller than wide → else-branch.
             const canvasAspect = canvas.width / canvas.height;
             const pageAspect = pageWidth / pageHeight;
             let imgWidth, imgHeight, x, y;
@@ -2293,6 +2274,8 @@
               y = 0;
             }
 
+            // PNG (lossless) so the cream stays an exact match against
+            // the page fill — no JPEG drift at the seam.
             pdf.addImage(
               canvas.toDataURL('image/png'),
               'PNG',
@@ -2305,9 +2288,7 @@
           })
           .catch((err) => {
             console.error('downloadInvoicePdf failed:', err);
-            alert(
-              'PDF generation failed — see the console for details.'
-            );
+            alert('PDF generation failed — see the console for details.');
           });
       }
 
