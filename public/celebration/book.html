@@ -2243,46 +2243,38 @@
             },
           })
           .then((canvas) => {
+            // Use letter-WIDTH (8.5") and let the page height match the
+            // captured invoice's aspect ratio. Result: cream fills the
+            // PDF page edge-to-edge horizontally AND vertically, one
+            // page guaranteed regardless of how many add-ons the user
+            // ticked. The page just gets taller for more content —
+            // standard digital-PDF behavior and prints fine via the
+            // browser's "scale to fit" option.
             const pageWidth = 8.5;
-            const pageHeight = 11;
+            const canvasAspect = canvas.width / canvas.height;
+            const pageHeight = pageWidth / canvasAspect;
 
             const pdf = new jsPDFCtor({
               unit: 'in',
-              format: 'letter',
-              orientation: 'portrait',
+              format: [pageWidth, pageHeight],
+              orientation: pageHeight > pageWidth ? 'portrait' : 'landscape',
             });
 
-            // Fill the whole page cream so any leftover gutter blends
-            // with the invoice paper itself.
+            // Fill the page cream first as belt-and-suspenders — if
+            // the PNG ever ends up with sub-pixel transparency around
+            // its edges, this catches it.
             pdf.setFillColor(251, 248, 243); // #fbf8f3
             pdf.rect(0, 0, pageWidth, pageHeight, 'F');
 
-            // Fit the canvas to the page while preserving aspect ratio.
-            // Typical invoice is taller than wide → else-branch.
-            const canvasAspect = canvas.width / canvas.height;
-            const pageAspect = pageWidth / pageHeight;
-            let imgWidth, imgHeight, x, y;
-            if (canvasAspect > pageAspect) {
-              imgWidth = pageWidth;
-              imgHeight = pageWidth / canvasAspect;
-              x = 0;
-              y = (pageHeight - imgHeight) / 2;
-            } else {
-              imgHeight = pageHeight;
-              imgWidth = pageHeight * canvasAspect;
-              x = (pageWidth - imgWidth) / 2;
-              y = 0;
-            }
-
-            // PNG (lossless) so the cream stays an exact match against
-            // the page fill — no JPEG drift at the seam.
+            // PNG (lossless) so the cream stays exact. Image fills the
+            // entire page.
             pdf.addImage(
               canvas.toDataURL('image/png'),
               'PNG',
-              x,
-              y,
-              imgWidth,
-              imgHeight
+              0,
+              0,
+              pageWidth,
+              pageHeight
             );
             pdf.save(filename);
           })
