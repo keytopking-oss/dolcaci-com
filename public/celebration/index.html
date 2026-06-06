@@ -1,0 +1,949 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Celebration Creation Decor — Event styling for life's special moments</title>
+    <meta
+      name="description"
+      content="Event decor and styling for weddings, birthdays, baby showers, corporate gatherings, and luxury picnics. Long Island, NY."
+    />
+
+    <!-- Tailwind via CDN — single-file mockup. Promote to a real Next.js
+         build once direction is approved. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              cream: '#faf7f2',
+              'cream-warm': '#f3ede1',
+              ink: '#1a1a1a',
+              terracotta: '#c87b5a',
+              'terracotta-dark': '#a85e3f',
+              muted: '#8a8175',
+              border: '#e8e1d2',
+            },
+            fontFamily: {
+              serif: ['"Playfair Display"', 'serif'],
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+            },
+          },
+        },
+      };
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      html {
+        scroll-behavior: smooth;
+      }
+
+      /* ===== Page background — botanical pattern wallpaper.
+         Stacked backgrounds: cream tint on top, pattern beneath.
+         attachment: scroll (the default) means the pattern scrolls
+         with the rest of the page — the design feels printed on
+         textured paper rather than viewed through fixed windows.
+         Also matches mobile behavior (iOS Safari is unreliable
+         with attachment:fixed so scroll keeps desktop + phone in
+         sync). Cream layer at ~95% opacity lets ~5% of the pattern
+         through — subtle texture, not visual competition.
+
+         TO TUNE the pattern visibility:
+           - More visible: lower the alpha (e.g., 0.90 = 10% pattern)
+           - Less visible: raise the alpha (e.g., 0.97 = 3% pattern)
+         TO TUNE the tile size:
+           - Smaller tiles (denser): change 500px to 350px
+           - Larger tiles (sparser): change 500px to 700px
+         TO MAKE THE PATTERN STATIONARY again (wallpaper feel):
+           - Add background-attachment: fixed, fixed; back in
+         TO REMOVE the pattern entirely:
+           - Delete the linear-gradient + url() lines, restore
+             background: #faf7f2;
+
+         Sections that have their own background colors (the cream-
+         warm testimonial / featured sections, dark ink footer)
+         naturally cover the pattern. That's intentional — the
+         pattern punctuates the default-cream sections only, which
+         gives the page a quiet visual rhythm. */
+      body {
+        background-color: #faf7f2;
+        background-image: linear-gradient(
+            rgba(250, 247, 242, 0.95),
+            rgba(250, 247, 242, 0.95)
+          ),
+          url('./background.png');
+        background-size: cover, 500px auto;
+        background-repeat: no-repeat, repeat;
+        color: #1a1a1a;
+        font-family: 'Inter', system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      .serif {
+        font-family: 'Playfair Display', serif;
+      }
+
+      /* Gentle fade-up as elements enter the viewport. */
+      .fade-up {
+        opacity: 0;
+        transform: translateY(24px);
+        transition:
+          opacity 800ms cubic-bezier(0.22, 1, 0.36, 1),
+          transform 800ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .fade-up.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* Subtle parallax + Ken Burns on the hero photo. */
+      @keyframes hero-zoom {
+        from {
+          transform: scale(1.04);
+        }
+        to {
+          transform: scale(1.12);
+        }
+      }
+      .hero-photo {
+        animation: hero-zoom 18s ease-out forwards;
+      }
+
+      /* Photo card hover lift. */
+      .tile {
+        transition:
+          transform 600ms cubic-bezier(0.22, 1, 0.36, 1),
+          box-shadow 600ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .tile:hover {
+        transform: translateY(-4px);
+      }
+      .tile-img {
+        transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .tile:hover .tile-img {
+        transform: scale(1.06);
+      }
+
+      /* Editorial drop cap for the featured story. */
+      .dropcap::first-letter {
+        font-family: 'Playfair Display', serif;
+        font-weight: 600;
+        font-size: 4.5rem;
+        line-height: 0.9;
+        float: left;
+        padding: 0.35rem 0.75rem 0 0;
+        color: #c87b5a;
+      }
+
+      /* =====================================================================
+         LOGO MODE TOGGLE — single-attribute reversibility.
+
+         The <body> below has data-brand="logo" by default, which:
+           - swaps the text wordmark in the nav for the logo image
+             (after scrolling past the hero — text stays over the hero
+              since the dark gradient needs light text)
+           - shows a large faded logo watermark behind the testimonial
+
+         TO REVERT to the original text-only treatment everywhere:
+           change   <body data-brand="logo">
+           to       <body data-brand="text">
+         That's it. One edit, full revert. No other code changes needed.
+
+         GRACEFUL FALLBACK: if logo.png is missing in this folder, the
+         onerror handler on the <img> kicks the page back to text mode
+         automatically, so it never renders broken. Drop a logo.png in
+         to enable it.
+         ===================================================================== */
+      /* Logo image variants:
+           - .logo-brand-img       = dark navy version, shown ONLY
+             when the nav is solid (scrolled past hero). The cream
+             nav background gives it enough contrast.
+           - .logo-brand-img-light = cream version, intentionally
+             unused as of 2026-06-05. We tried showing it over the
+             hero photo but the second line of the wordmark
+             ("CREATION · DECOR") overlapped the hero's "LONG ISLAND
+             · EVENT STYLING" label since both sit in the top-left
+             zone. The file is kept around in case we want a smaller
+             monogram-only treatment over the hero later.
+           - .logo-brand-text      = inline serif fallback, only
+             shown in data-brand="text" mode (revert path).
+         Behaviour: over the hero, the nav shows just the menu links
+         on the right. As soon as the nav transitions to solid (cream
+         bg) on scroll, the dark wordmark appears on the left. This
+         is the standard luxury-site pattern — the photo carries the
+         brand identity at the top, the persistent banner provides
+         the brand mark everywhere else. */
+      .logo-brand-img,
+      .logo-brand-img-light,
+      .logo-brand-monogram-light,
+      .logo-brand-watermark {
+        display: none;
+      }
+      body[data-brand='text'] .logo-brand-text {
+        display: inline-block;
+      }
+      /* In logo mode, hide the inline text fallback always. The
+         cream wordmark shows over the hero, the dark wordmark takes
+         over once the nav goes solid. Overlap with the LONG ISLAND
+         label is prevented by the hero's min-h 880px + pt-32
+         content padding + text-6xl headline cap on md (lg+ still
+         text-7xl) — all of which keep the hero content stack far
+         enough below the nav zone. */
+      body[data-brand='logo'] .logo-brand-text {
+        display: none;
+      }
+      body[data-brand='logo'] .logo-brand-img-light {
+        display: inline-block;
+      }
+      body[data-brand='logo'] #nav.solid .logo-brand-img-light {
+        display: none;
+      }
+      body[data-brand='logo'] #nav.solid .logo-brand-img {
+        display: inline-block;
+      }
+      body[data-brand='logo'] .logo-brand-watermark {
+        display: block;
+      }
+
+      /* Two-state nav: dark over hero, cream when scrolled. */
+      #nav {
+        background-color: rgba(0, 0, 0, 0.88);
+        transition: background-color 300ms ease, color 300ms ease;
+      }
+      #nav.solid {
+        background-color: rgba(250, 247, 242, 0.96);
+      }
+      #nav.solid .nav-link {
+        color: #1a1a1a;
+      }
+      #nav.solid .nav-brand {
+        color: #1a1a1a;
+      }
+
+      /* Tiny scroll indicator pulse. */
+      @keyframes scroll-pulse {
+        0%,
+        100% {
+          opacity: 0.7;
+          transform: translateY(0);
+        }
+        50% {
+          opacity: 1;
+          transform: translateY(4px);
+        }
+      }
+      .scroll-arrow {
+        animation: scroll-pulse 2.4s ease-in-out infinite;
+      }
+    </style>
+  </head>
+
+  <body class="font-sans antialiased" data-brand="logo">
+    <!-- ============================= NAV ============================= -->
+    <nav
+      id="nav"
+      class="fixed top-0 left-0 right-0 z-50 px-6 md:px-12 py-5"
+    >
+      <div class="mx-auto max-w-7xl flex items-center justify-between">
+        <a href="#top" class="flex items-center gap-3">
+          <!-- C monogram (cream) — shown over the hero photo. Small
+               compact icon so it provides brand presence without
+               risking overlap with the hero's LONG ISLAND label.
+               When the nav goes solid, this swaps for the full dark
+               wordmark. -->
+          <img
+            src="./logo part cream.png"
+            alt="Celebration Creation Decor"
+            class="logo-brand-monogram-light h-10 md:h-12 w-auto"
+            onerror="document.body.setAttribute('data-brand', 'text');"
+          />
+          <!-- Cream wordmark variant — kept in the markup but
+               hidden by default (see CSS above). The
+               .logo-brand-img-light class no longer has a display:
+               inline-block rule, so this PNG never renders. Left
+               in place in case we ever want a tall-viewport
+               treatment where the full wordmark fits. -->
+          <img
+            src="./text part logo cream.png"
+            alt=""
+            aria-hidden="true"
+            class="logo-brand-img-light h-12 md:h-16 w-auto"
+            onerror="document.body.setAttribute('data-brand', 'text');"
+          />
+          <!-- Dark variant of the wordmark — shown when the nav is
+               solid cream (scrolled past hero). Transparent PNG so
+               it sits cleanly on the cream nav. -->
+          <img
+            src="./text part logo transparent.png"
+            alt="Celebration Creation Decor"
+            class="logo-brand-img h-12 md:h-16 w-auto"
+            onerror="document.body.setAttribute('data-brand', 'text');"
+          />
+          <!-- Text fallback — only shown when data-brand="text"
+               (revert path). The CSS keeps this hidden in logo
+               mode so it never overlaps with the image. -->
+          <span
+            class="logo-brand-text nav-brand serif text-lg md:text-xl font-medium tracking-tight text-cream"
+          >
+            Celebration <span class="italic font-normal">Creation</span> Decor
+          </span>
+        </a>
+        <div class="hidden md:flex items-center gap-9 text-sm">
+          <a
+            href="#what-we-style"
+            class="nav-link text-cream/90 hover:text-terracotta transition-colors"
+            >What we style</a
+          >
+          <a
+            href="#featured"
+            class="nav-link text-cream/90 hover:text-terracotta transition-colors"
+            >Recent events</a
+          >
+          <a
+            href="#process"
+            class="nav-link text-cream/90 hover:text-terracotta transition-colors"
+            >Our process</a
+          >
+          <a
+            href="./book.html"
+            class="nav-link text-cream/90 hover:text-terracotta transition-colors"
+            >Packages</a
+          >
+          <a
+            href="#inquire"
+            class="nav-link text-cream/90 hover:text-terracotta transition-colors"
+            >Inquire</a
+          >
+        </div>
+        <button
+          aria-label="Open menu"
+          class="md:hidden text-cream"
+          onclick="document.getElementById('mobile-menu').classList.toggle('hidden')"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-6 h-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"
+            />
+          </svg>
+        </button>
+      </div>
+      <div
+        id="mobile-menu"
+        class="hidden md:hidden mt-4 pb-3 flex flex-col gap-3 text-sm text-cream"
+      >
+        <a href="#what-we-style" class="nav-link">What we style</a>
+        <a href="#featured" class="nav-link">Recent events</a>
+        <a href="#process" class="nav-link">Our process</a>
+        <a
+          href="./book.html"
+          class="nav-link"
+          >Packages</a
+        >
+        <a href="#inquire" class="nav-link">Inquire</a>
+      </div>
+    </nav>
+
+    <!-- ============================= HERO ============================= -->
+    <!-- min-h bumped to 880px to guarantee enough room for the
+         content stack (headline + subtitle + CTA + label + spacing
+         + pt/pb padding + nav clearance) on every viewport. 880 is
+         more conservative than strictly necessary but eliminates
+         all overlap edge cases. -->
+    <section id="top" class="relative h-screen min-h-[880px] w-full overflow-hidden">
+      <div class="absolute inset-0">
+        <img
+          src="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=2400&q=85"
+          alt="Event tablescape with florals"
+          class="hero-photo w-full h-full object-cover"
+          onerror="this.style.display='none'; document.getElementById('hero-fallback').style.display='block';"
+        />
+        <div
+          id="hero-fallback"
+          class="absolute inset-0 hidden"
+          style="background: linear-gradient(135deg, #c87b5a 0%, #8a4a3a 60%, #3d2820 100%);"
+        ></div>
+        <!-- Hero photo overlay — just provides bottom-darkening for
+             the cream headline + subtitle + CTA. The nav handles its
+             own dark backdrop (CSS above) which scrolls with the nav
+             via position:fixed, so the top of this overlay can be
+             light. Mid-hero is lightest so the photo shines. -->
+        <div
+          class="absolute inset-0"
+          style="background: linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.05) 35%, rgba(0,0,0,0.55) 100%);"
+        ></div>
+      </div>
+
+      <!-- pt-28 md:pt-32 reserves vertical space at the top of the
+           hero content so even on weird short viewports the
+           headline can never crawl up into the nav. With
+           justify-end the content stays pinned to the bottom of
+           the unpadded area; this pt just establishes a "do not
+           cross" line above which the cream wordmark in the nav
+           lives. -->
+      <div
+        class="relative h-full flex flex-col justify-end px-6 md:px-12 pt-28 md:pt-32 pb-20 md:pb-28 max-w-7xl mx-auto"
+      >
+        <div class="max-w-2xl">
+          <p
+            class="text-cream/80 text-xs md:text-sm font-medium uppercase tracking-[0.25em] mb-5"
+          >
+            Long Island · Event Styling
+          </p>
+          <!-- Headline scaled back from md:text-7xl (72px) to
+               md:text-6xl (60px) so the content stack reliably fits
+               in the hero without overflowing upward into the nav.
+               Still impactful — the serif weight + width carries
+               the visual heft. lg:text-7xl restores the larger
+               size on wide viewports where there's room. -->
+          <h1
+            class="serif text-cream text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[1.04] font-medium tracking-tight mb-6"
+          >
+            Decor that makes <span class="italic font-normal">the moment</span>
+            feel like the photo.
+          </h1>
+          <p
+            class="text-cream/85 text-base md:text-lg max-w-xl mb-9 leading-relaxed"
+          >
+            Event styling for weddings, showers, birthdays, corporate
+            gatherings, and luxury picnics. We design the look, set it up,
+            and break it down so you get to be a guest at your own event.
+          </p>
+          <a
+            href="#inquire"
+            class="inline-flex items-center gap-2 bg-terracotta hover:bg-terracotta-dark text-cream px-7 py-3.5 text-sm font-medium tracking-wide transition-colors"
+          >
+            Plan your event
+            <span aria-hidden>→</span>
+          </a>
+        </div>
+      </div>
+
+      <div
+        class="absolute bottom-6 left-1/2 -translate-x-1/2 text-cream/70 text-xs uppercase tracking-[0.3em] flex flex-col items-center gap-2 scroll-arrow"
+      >
+        Scroll
+        <span aria-hidden>↓</span>
+      </div>
+    </section>
+
+    <!-- ============================= WHAT WE STYLE ============================= -->
+    <section id="what-we-style" class="px-6 md:px-12 py-24 md:py-32">
+      <div class="mx-auto max-w-7xl">
+        <div class="fade-up max-w-2xl mb-14 md:mb-20">
+          <p
+            class="text-terracotta text-xs font-medium uppercase tracking-[0.25em] mb-4"
+          >
+            What we style
+          </p>
+          <h2
+            class="serif text-3xl md:text-5xl leading-[1.1] tracking-tight"
+          >
+            From a low-key
+            <span class="italic">backyard picnic</span>
+            to a 200-guest wedding.
+          </h2>
+        </div>
+
+        <div
+          class="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 fade-up"
+        >
+          <!-- Tile template -->
+          <a
+            href="#inquire"
+            class="tile group block relative aspect-[3/4] overflow-hidden bg-cream-warm"
+          >
+            <img
+              src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=600&q=80"
+              alt="Wedding tablescape"
+              class="tile-img absolute inset-0 w-full h-full object-cover"
+              onerror="this.style.display='none'"
+            />
+            <div
+              class="absolute inset-0"
+              style="background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,0.6) 100%);"
+            ></div>
+            <div class="absolute inset-x-0 bottom-0 p-4 md:p-5">
+              <p
+                class="serif text-cream text-lg md:text-2xl tracking-tight"
+              >
+                Weddings
+              </p>
+            </div>
+          </a>
+
+          <a
+            href="#inquire"
+            class="tile group block relative aspect-[3/4] overflow-hidden bg-cream-warm"
+          >
+            <img
+              src="https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=600&q=80"
+              alt="Birthday table styling"
+              class="tile-img absolute inset-0 w-full h-full object-cover"
+              onerror="this.style.display='none'"
+            />
+            <div
+              class="absolute inset-0"
+              style="background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,0.6) 100%);"
+            ></div>
+            <div class="absolute inset-x-0 bottom-0 p-4 md:p-5">
+              <p
+                class="serif text-cream text-lg md:text-2xl tracking-tight"
+              >
+                Birthdays
+              </p>
+            </div>
+          </a>
+
+          <a
+            href="#inquire"
+            class="tile group block relative aspect-[3/4] overflow-hidden bg-cream-warm"
+          >
+            <img
+              src="https://images.unsplash.com/photo-1607247098730-37c97fa8ec2c?auto=format&fit=crop&w=600&q=80"
+              alt="Baby shower decor"
+              class="tile-img absolute inset-0 w-full h-full object-cover"
+              onerror="this.style.display='none'"
+            />
+            <div
+              class="absolute inset-0"
+              style="background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,0.6) 100%);"
+            ></div>
+            <div class="absolute inset-x-0 bottom-0 p-4 md:p-5">
+              <p
+                class="serif text-cream text-lg md:text-2xl tracking-tight"
+              >
+                Showers
+              </p>
+            </div>
+          </a>
+
+          <a
+            href="#inquire"
+            class="tile group block relative aspect-[3/4] overflow-hidden bg-cream-warm"
+          >
+            <img
+              src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=600&q=80"
+              alt="Corporate event styling"
+              class="tile-img absolute inset-0 w-full h-full object-cover"
+              onerror="this.style.display='none'"
+            />
+            <div
+              class="absolute inset-0"
+              style="background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,0.6) 100%);"
+            ></div>
+            <div class="absolute inset-x-0 bottom-0 p-4 md:p-5">
+              <p
+                class="serif text-cream text-lg md:text-2xl tracking-tight"
+              >
+                Corporate
+              </p>
+            </div>
+          </a>
+
+          <a
+            href="#inquire"
+            class="tile group block relative aspect-[3/4] overflow-hidden bg-cream-warm col-span-2 md:col-span-1"
+          >
+            <img
+              src="https://images.unsplash.com/photo-1505330622279-bf7d7fc918f4?auto=format&fit=crop&w=600&q=80"
+              alt="Luxury picnic setup"
+              class="tile-img absolute inset-0 w-full h-full object-cover"
+              onerror="this.style.display='none'"
+            />
+            <div
+              class="absolute inset-0"
+              style="background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,0.6) 100%);"
+            ></div>
+            <div class="absolute inset-x-0 bottom-0 p-4 md:p-5">
+              <p
+                class="serif text-cream text-lg md:text-2xl tracking-tight"
+              >
+                Picnics
+              </p>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================= FEATURED ============================= -->
+    <section id="featured" class="px-6 md:px-12 py-20 md:py-28 bg-cream-warm">
+      <div class="mx-auto max-w-7xl">
+        <div class="fade-up grid md:grid-cols-2 gap-10 md:gap-16 items-center">
+          <div class="order-2 md:order-1">
+            <p
+              class="text-terracotta text-xs font-medium uppercase tracking-[0.25em] mb-4"
+            >
+              Recent event · May 2026
+            </p>
+            <h3
+              class="serif text-3xl md:text-4xl leading-[1.15] tracking-tight mb-6"
+            >
+              A backyard <span class="italic">proposal picnic</span> for Sarah
+              &amp; James.
+            </h3>
+            <p class="dropcap text-ink/80 text-base leading-[1.8] mb-6">
+              Sarah's only ask was "make it look like the Pinterest board
+              I've been saving for two years." Low cedar table, pampas grass,
+              taper candles, dried floral garland, vintage rugs underfoot.
+              The whole setup landed in 90 minutes. James proposed before
+              the candles even lit.
+            </p>
+            <a
+              href="#inquire"
+              class="inline-flex items-center gap-2 text-terracotta hover:text-terracotta-dark text-sm font-medium tracking-wide group"
+            >
+              See more events
+              <span
+                aria-hidden
+                class="transition-transform group-hover:translate-x-1"
+                >→</span
+              >
+            </a>
+          </div>
+          <div class="order-1 md:order-2">
+            <div class="relative aspect-[4/5] overflow-hidden">
+              <img
+                src="https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=1400&q=85"
+                alt="Backyard proposal picnic setup"
+                class="absolute inset-0 w-full h-full object-cover"
+                onerror="this.style.display='none'; this.parentElement.style.background='linear-gradient(135deg, #c87b5a, #8a4a3a)';"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================= PROCESS ============================= -->
+    <section id="process" class="px-6 md:px-12 py-24 md:py-32">
+      <div class="mx-auto max-w-7xl">
+        <div class="fade-up max-w-2xl mb-16 md:mb-20">
+          <p
+            class="text-terracotta text-xs font-medium uppercase tracking-[0.25em] mb-4"
+          >
+            How it works
+          </p>
+          <h2
+            class="serif text-3xl md:text-5xl leading-[1.1] tracking-tight"
+          >
+            Three steps. We do the rest.
+          </h2>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-12 md:gap-10">
+          <div class="fade-up">
+            <p
+              class="serif text-terracotta text-7xl md:text-8xl leading-none font-medium mb-5"
+            >
+              01
+            </p>
+            <h4 class="serif text-xl md:text-2xl mb-3 tracking-tight">
+              You tell us about the moment.
+            </h4>
+            <p class="text-ink/70 leading-relaxed text-sm md:text-base">
+              Send a quick inquiry — event type, date, venue, vibe, rough
+              guest count, budget range. The more honest you are about the
+              budget the better we can match the look.
+            </p>
+          </div>
+          <div class="fade-up">
+            <p
+              class="serif text-terracotta text-7xl md:text-8xl leading-none font-medium mb-5"
+            >
+              02
+            </p>
+            <h4 class="serif text-xl md:text-2xl mb-3 tracking-tight">
+              We design and propose.
+            </h4>
+            <p class="text-ink/70 leading-relaxed text-sm md:text-base">
+              Within a few days we send a mood board, a written concept, and
+              a clear quote. No surprises, no "and that'll be extra"
+              moments. You either love it or we tweak it.
+            </p>
+          </div>
+          <div class="fade-up">
+            <p
+              class="serif text-terracotta text-7xl md:text-8xl leading-none font-medium mb-5"
+            >
+              03
+            </p>
+            <h4 class="serif text-xl md:text-2xl mb-3 tracking-tight">
+              We set up and break down.
+            </h4>
+            <p class="text-ink/70 leading-relaxed text-sm md:text-base">
+              The day of, we arrive early, set everything up, double-check
+              every detail, and come back to break it down so you don't
+              touch a thing. You stay in the moment.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================= TESTIMONIAL ============================= -->
+    <section
+      class="relative overflow-hidden px-6 md:px-12 py-20 md:py-28 bg-cream-warm"
+    >
+      <!-- "C" monogram watermark behind the quote. Using the logo-part
+           image (just the decorative mark, not the wordmark) since the
+           monogram reads better as a low-opacity ornamental element
+           than the full wordmark would. Sized smaller than a wreath
+           watermark since the monogram is more compact / iconic.
+           Hidden when data-brand="text". -->
+      <img
+        src="./logo part transparent.png"
+        alt=""
+        aria-hidden="true"
+        class="logo-brand-watermark absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] max-w-[90%] pointer-events-none select-none"
+        style="opacity: 0.09;"
+      />
+      <div class="relative mx-auto max-w-3xl text-center fade-up">
+        <p class="serif text-2xl md:text-4xl leading-[1.3] tracking-tight">
+          <span class="text-terracotta">"</span>She styled my mom's 60th
+          birthday in early May. Tablescape, florals, the small details —
+          all of it thought through. Mom kept showing the photos to people
+          for weeks after.<span class="text-terracotta">"</span>
+        </p>
+        <p
+          class="mt-8 text-xs font-medium uppercase tracking-[0.25em] text-muted"
+        >
+          Tim Murphy · Owner's nephew · Mom's 60th · May 2026
+        </p>
+      </div>
+    </section>
+
+    <!-- ============================= INQUIRE ============================= -->
+    <section id="inquire" class="px-6 md:px-12 py-24 md:py-32">
+      <div class="mx-auto max-w-3xl">
+        <div class="fade-up text-center mb-14">
+          <p
+            class="text-terracotta text-xs font-medium uppercase tracking-[0.25em] mb-4"
+          >
+            Inquire
+          </p>
+          <h2
+            class="serif text-3xl md:text-5xl leading-[1.1] tracking-tight mb-5"
+          >
+            Tell us about your event.
+          </h2>
+          <p class="text-ink/70 leading-relaxed">
+            The more detail you can share, the better the proposal we can
+            come back with. We usually reply within one business day.
+          </p>
+        </div>
+
+        <form class="fade-up grid gap-5" onsubmit="event.preventDefault(); alert('This is a mockup — the form will be wired up to email/Resend when we promote this to the real Next.js build.');">
+          <div class="grid md:grid-cols-2 gap-5">
+            <label class="block">
+              <span class="block text-xs font-medium uppercase tracking-[0.18em] text-muted mb-2"
+                >Your name</span
+              >
+              <input
+                type="text"
+                required
+                class="w-full bg-cream border border-border focus:border-terracotta px-4 py-3 text-base font-sans focus:outline-none transition-colors"
+                placeholder="Jane Doe"
+              />
+            </label>
+            <label class="block">
+              <span class="block text-xs font-medium uppercase tracking-[0.18em] text-muted mb-2"
+                >Email</span
+              >
+              <input
+                type="email"
+                required
+                class="w-full bg-cream border border-border focus:border-terracotta px-4 py-3 text-base font-sans focus:outline-none transition-colors"
+                placeholder="you@example.com"
+              />
+            </label>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-5">
+            <label class="block">
+              <span class="block text-xs font-medium uppercase tracking-[0.18em] text-muted mb-2"
+                >Event type</span
+              >
+              <select
+                class="w-full bg-cream border border-border focus:border-terracotta px-4 py-3 text-base font-sans focus:outline-none transition-colors"
+              >
+                <option>Wedding</option>
+                <option>Birthday</option>
+                <option>Baby shower</option>
+                <option>Bridal shower</option>
+                <option>Corporate / brand</option>
+                <option>Luxury picnic</option>
+                <option>Proposal</option>
+                <option>Other / not sure yet</option>
+              </select>
+            </label>
+            <label class="block">
+              <span class="block text-xs font-medium uppercase tracking-[0.18em] text-muted mb-2"
+                >Event date</span
+              >
+              <input
+                type="date"
+                class="w-full bg-cream border border-border focus:border-terracotta px-4 py-3 text-base font-sans focus:outline-none transition-colors"
+              />
+            </label>
+          </div>
+
+          <label class="block">
+            <span class="block text-xs font-medium uppercase tracking-[0.18em] text-muted mb-2"
+              >Venue or location</span
+            >
+            <input
+              type="text"
+              class="w-full bg-cream border border-border focus:border-terracotta px-4 py-3 text-base font-sans focus:outline-none transition-colors"
+              placeholder="Backyard in Smithtown, NY"
+            />
+          </label>
+
+          <label class="block">
+            <span class="block text-xs font-medium uppercase tracking-[0.18em] text-muted mb-2"
+              >Budget range</span
+            >
+            <select
+              class="w-full bg-cream border border-border focus:border-terracotta px-4 py-3 text-base font-sans focus:outline-none transition-colors"
+            >
+              <option>Under $500</option>
+              <option>$500 – $1,000</option>
+              <option>$1,000 – $2,500</option>
+              <option>$2,500 – $5,000</option>
+              <option>$5,000+</option>
+              <option>Not sure yet</option>
+            </select>
+          </label>
+
+          <label class="block">
+            <span class="block text-xs font-medium uppercase tracking-[0.18em] text-muted mb-2"
+              >Tell us about the vibe</span
+            >
+            <textarea
+              rows="4"
+              class="w-full bg-cream border border-border focus:border-terracotta px-4 py-3 text-base font-sans focus:outline-none transition-colors leading-relaxed"
+              placeholder="Pampas grass, neutrals, low table, candles. Late afternoon golden hour, about 6 people. Mood board on Pinterest under @sarahk."
+            ></textarea>
+          </label>
+
+          <button
+            type="submit"
+            class="mt-3 inline-flex items-center justify-center gap-2 bg-ink hover:bg-terracotta text-cream px-8 py-4 text-sm font-medium tracking-wide transition-colors"
+          >
+            Send inquiry
+            <span aria-hidden>→</span>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============================= FOOTER ============================= -->
+    <footer class="bg-ink text-cream/80 px-6 md:px-12 py-14">
+      <div
+        class="mx-auto max-w-7xl flex flex-col md:flex-row gap-8 md:gap-0 justify-between items-start"
+      >
+        <div>
+          <p class="serif text-cream text-xl tracking-tight">
+            Celebration <span class="italic font-normal">Creation</span> Decor
+          </p>
+          <p class="mt-2 text-xs uppercase tracking-[0.25em] text-cream/60">
+            Long Island, NY · Event Styling
+          </p>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-8 text-sm">
+          <div>
+            <p class="text-xs uppercase tracking-[0.18em] text-cream/50 mb-3">
+              Reach us
+            </p>
+            <a href="mailto:hello@example.com" class="block hover:text-terracotta"
+              >hello@example.com</a
+            >
+            <a href="tel:+15555555555" class="block hover:text-terracotta mt-1.5"
+              >(555) 555-5555</a
+            >
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-[0.18em] text-cream/50 mb-3">
+              Follow
+            </p>
+            <a href="#" class="block hover:text-terracotta">Instagram</a>
+            <a href="#" class="block hover:text-terracotta mt-1.5">Pinterest</a>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-[0.18em] text-cream/50 mb-3">
+              Service area
+            </p>
+            <p>Long Island</p>
+            <p class="mt-1.5">Greater NYC</p>
+          </div>
+        </div>
+      </div>
+      <div
+        class="mx-auto max-w-7xl mt-10 pt-6 border-t border-cream/10 text-xs text-cream/50 flex flex-col sm:flex-row gap-3 sm:gap-0 justify-between"
+      >
+        <p>© 2026 Celebration Creation Decor LLC</p>
+        <p>Designed with care · Suffolk County, NY</p>
+      </div>
+    </footer>
+
+    <script>
+      // Solid nav the moment content from below the hero starts
+      // appearing under the nav — i.e., when the bottom edge of the
+      // nav reaches the bottom edge of the hero. Previously used a
+      // fixed 85%-of-viewport threshold, which fired while the nav
+      // was still over the hero photo (cream logo on dark photo)
+      // even though the next section's text was about to appear.
+      // Now the swap is precise: cream logo while ANY part of the
+      // hero is under the nav, dark logo the instant content takes
+      // over. Recomputes on resize so it stays accurate when the
+      // viewport changes (rotation on mobile, window resize on
+      // desktop). */
+      const nav = document.getElementById('nav');
+      const hero = document.getElementById('top');
+      const updateNavState = () => {
+        const heroBottom = hero.offsetTop + hero.offsetHeight;
+        const navHeight = nav.offsetHeight;
+        if (window.scrollY + navHeight >= heroBottom) {
+          nav.classList.add('solid');
+        } else {
+          nav.classList.remove('solid');
+        }
+      };
+      window.addEventListener('scroll', updateNavState, { passive: true });
+      window.addEventListener('resize', updateNavState, { passive: true });
+      updateNavState();
+
+      // Fade-up on viewport entry.
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) {
+              e.target.classList.add('visible');
+              io.unobserve(e.target);
+            }
+          }
+        },
+        { threshold: 0.15 }
+      );
+      document.querySelectorAll('.fade-up').forEach((el) => io.observe(el));
+    </script>
+  </body>
+</html>

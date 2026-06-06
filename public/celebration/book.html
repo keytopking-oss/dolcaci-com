@@ -1,0 +1,1522 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>
+      Book your event — Celebration Creation Decor
+    </title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              cream: '#faf7f2',
+              'cream-warm': '#f3ede1',
+              ink: '#1a1a1a',
+              terracotta: '#c87b5a',
+              'terracotta-dark': '#a85e3f',
+              muted: '#8a8175',
+              border: '#e8e1d2',
+            },
+            fontFamily: {
+              serif: ['"Playfair Display"', 'serif'],
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+            },
+          },
+        },
+      };
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      html {
+        scroll-behavior: smooth;
+      }
+
+      /* ===== Botanical pattern — mirrors index.html.
+         attachment: scroll (default) so the pattern moves with the
+         page. See index.html for full tuning notes. */
+      body {
+        background-color: #faf7f2;
+        background-image: linear-gradient(
+            rgba(250, 247, 242, 0.95),
+            rgba(250, 247, 242, 0.95)
+          ),
+          url('./background.png');
+        background-size: cover, 500px auto;
+        background-repeat: no-repeat, repeat;
+        color: #1a1a1a;
+        font-family: 'Inter', system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .serif {
+        font-family: 'Playfair Display', serif;
+      }
+
+      /* Package card radio-as-card styling. */
+      input[name='package'] {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .package-card {
+        border: 1.5px solid #e8e1d2;
+        transition:
+          border-color 200ms ease,
+          background-color 200ms ease,
+          transform 200ms ease,
+          box-shadow 200ms ease;
+        cursor: pointer;
+      }
+      .package-card:hover {
+        border-color: #c87b5a;
+        transform: translateY(-2px);
+      }
+      input[name='package']:checked + .package-card {
+        border-color: #c87b5a;
+        background-color: #fdf9f4;
+        box-shadow: 0 8px 24px -8px rgba(200, 123, 90, 0.25);
+      }
+      input[name='package']:checked + .package-card .pkg-check {
+        background-color: #c87b5a;
+        border-color: #c87b5a;
+      }
+      input[name='package']:checked + .package-card .pkg-check svg {
+        opacity: 1;
+      }
+      .pkg-check {
+        transition: background-color 200ms ease, border-color 200ms ease;
+      }
+      .pkg-check svg {
+        opacity: 0;
+        transition: opacity 200ms ease;
+      }
+
+      /* Add-on row styling. */
+      input[name^='addon-'] {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .addon-row {
+        /* Solid cream bg so the body wallpaper doesn't show through
+           the selectable surface — UI controls should read as
+           distinct, tappable cards. Same value as the page bg so
+           the cards feel integrated, with the border providing
+           the visual frame. */
+        background-color: #faf7f2;
+        border: 1px solid #e8e1d2;
+        transition:
+          background-color 200ms ease,
+          border-color 200ms ease;
+        cursor: pointer;
+      }
+      .addon-row:hover {
+        background-color: #f3ede1;
+      }
+      input[name^='addon-']:checked + .addon-row {
+        background-color: #fdf9f4;
+        border-color: #c87b5a;
+      }
+      input[name^='addon-']:checked + .addon-row .addon-check {
+        background-color: #c87b5a;
+        border-color: #c87b5a;
+      }
+      input[name^='addon-']:checked + .addon-row .addon-check svg {
+        opacity: 1;
+      }
+      .addon-check {
+        transition: background-color 200ms ease, border-color 200ms ease;
+      }
+      .addon-check svg {
+        opacity: 0;
+        transition: opacity 200ms ease;
+      }
+
+      /* Form input shared style. */
+      .field {
+        /* Solid cream surface so the wallpaper pattern doesn't show
+           through the input field. Same value as the page bg — the
+           border alone provides the visual frame of the input zone.
+           Helps text legibility too: pattern-tinted bg makes the
+           placeholder + typed text feel muddied. */
+        background-color: #faf7f2;
+        border: 1px solid #e8e1d2;
+        padding: 12px 16px;
+        font-size: 15px;
+        font-family: inherit;
+        color: inherit;
+        width: 100%;
+        outline: none;
+        transition: border-color 200ms ease;
+      }
+      .field:focus {
+        border-color: #c87b5a;
+      }
+      .field-label {
+        display: block;
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: #8a8175;
+        margin-bottom: 8px;
+      }
+
+      /* Step number badge. */
+      .step-num {
+        font-family: 'Playfair Display', serif;
+        color: #c87b5a;
+        font-weight: 500;
+        font-size: 1.75rem;
+        line-height: 1;
+      }
+
+      /* Mobile summary drawer. */
+      @media (max-width: 1023px) {
+        .summary-mobile {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background-color: #faf7f2;
+          border-top: 1px solid #e8e1d2;
+          box-shadow: 0 -8px 24px -8px rgba(26, 26, 26, 0.1);
+          z-index: 40;
+        }
+      }
+
+      /* ===== LOGO MODE TOGGLE — IDENTICAL to index.html so the
+         banner renders pixel-for-pixel the same. The booking nav
+         pre-applies the .solid class on the <nav> element below
+         (no scroll listener needed since there's no hero here),
+         so the dark wordmark shows immediately on a cream banner —
+         exactly matching the homepage's scrolled-past-hero state. */
+      .logo-brand-img,
+      .logo-brand-img-light,
+      .logo-brand-monogram-light {
+        display: none;
+      }
+      body[data-brand='text'] .logo-brand-text {
+        display: inline-block;
+      }
+      body[data-brand='logo'] .logo-brand-text {
+        display: none;
+      }
+      body[data-brand='logo'] .logo-brand-img-light {
+        display: inline-block;
+      }
+      body[data-brand='logo'] #nav.solid .logo-brand-img-light {
+        display: none;
+      }
+      body[data-brand='logo'] #nav.solid .logo-brand-img {
+        display: inline-block;
+      }
+
+      /* Two-state nav: dark over hero, cream when scrolled — IDENTICAL
+         to index.html. Book.html has .solid pre-applied so it loads
+         in the cream state, but the dark base is here so the rule
+         engine matches the homepage exactly. */
+      #nav {
+        background-color: rgba(0, 0, 0, 0.88);
+        transition: background-color 300ms ease, color 300ms ease;
+      }
+      #nav.solid {
+        background-color: rgba(250, 247, 242, 0.96);
+      }
+      #nav.solid .nav-link {
+        color: #1a1a1a;
+      }
+      #nav.solid .nav-brand {
+        color: #1a1a1a;
+      }
+
+      /* ===== Elegant success reveal animations =====
+         Triggered when #checkout-success has the .animate-in class.
+         Each element keyframes from a starting state to a final one,
+         staggered so the eye lands first on the check, then reads
+         downward. Easing tuned to feel deliberate but not slow. */
+
+      @keyframes form-fade-out {
+        from {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        to {
+          opacity: 0;
+          transform: translateY(-8px);
+        }
+      }
+      #checkout-form.fading {
+        animation: form-fade-out 280ms cubic-bezier(0.4, 0, 1, 1) forwards;
+        pointer-events: none;
+      }
+
+      @keyframes circle-pop {
+        0% {
+          opacity: 0;
+          transform: scale(0.5);
+        }
+        60% {
+          opacity: 1;
+          transform: scale(1.1);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      @keyframes check-draw {
+        from {
+          stroke-dashoffset: 30;
+        }
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+
+      @keyframes ring-pulse {
+        0% {
+          opacity: 0.6;
+          transform: scale(0.85);
+        }
+        100% {
+          opacity: 0;
+          transform: scale(2.1);
+        }
+      }
+
+      @keyframes elegant-fade-up {
+        from {
+          opacity: 0;
+          transform: translateY(14px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes soft-fade-in {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      /* Apply the staged reveal only when the success container is
+         actively animating in. The .animate-in class is added by JS
+         right after the form fade-out completes, so each child plays
+         exactly once per checkout. */
+
+      #checkout-success .success-circle {
+        opacity: 0;
+        transform-origin: center;
+      }
+      #checkout-success.animate-in .success-circle {
+        animation: circle-pop 520ms cubic-bezier(0.22, 1.4, 0.36, 1)
+          forwards;
+      }
+
+      #checkout-success .success-check {
+        stroke-dasharray: 30;
+        stroke-dashoffset: 30;
+      }
+      #checkout-success.animate-in .success-check {
+        animation: check-draw 380ms 380ms
+          cubic-bezier(0.65, 0, 0.35, 1) forwards;
+      }
+
+      #checkout-success .success-ring {
+        opacity: 0;
+        transform-origin: center;
+      }
+      #checkout-success.animate-in .success-ring {
+        animation: ring-pulse 950ms 240ms ease-out forwards;
+      }
+
+      #checkout-success .success-stagger {
+        opacity: 0;
+      }
+      #checkout-success.animate-in .success-heading {
+        animation: elegant-fade-up 540ms 620ms
+          cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      }
+      #checkout-success.animate-in .success-desc {
+        animation: elegant-fade-up 540ms 760ms
+          cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      }
+      #checkout-success.animate-in .success-summary-card {
+        animation: elegant-fade-up 540ms 920ms
+          cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      }
+      #checkout-success.animate-in .success-close {
+        animation: soft-fade-in 420ms 1120ms ease-out forwards;
+      }
+    </style>
+  </head>
+
+  <body data-brand="logo">
+    <!-- ============================= NAV ============================= -->
+    <!-- Cloned VERBATIM from index.html so the banner is pixel-
+         identical: same logo image stack (monogram + cream wordmark
+         + dark wordmark + text fallback), same nav-link list, same
+         padding, same container. Only difference: id="nav" gets the
+         .solid class pre-applied (no hero on this page to be
+         transparent over), so the cream-banner-with-dark-wordmark
+         state shows immediately. -->
+    <nav
+      id="nav"
+      class="solid fixed top-0 left-0 right-0 z-50 px-6 md:px-12 py-5"
+    >
+      <div class="mx-auto max-w-7xl flex items-center justify-between">
+        <a href="./index.html" class="flex items-center gap-3">
+          <!-- C monogram (cream) — hidden in .solid state via CSS. -->
+          <img
+            src="./logo part cream.png"
+            alt="Celebration Creation Decor"
+            class="logo-brand-monogram-light h-10 md:h-12 w-auto"
+            onerror="document.body.setAttribute('data-brand', 'text');"
+          />
+          <!-- Cream wordmark variant — hidden in .solid state. -->
+          <img
+            src="./text part logo cream.png"
+            alt=""
+            aria-hidden="true"
+            class="logo-brand-img-light h-12 md:h-16 w-auto"
+            onerror="document.body.setAttribute('data-brand', 'text');"
+          />
+          <!-- Dark wordmark — shown in .solid state (this is what
+               renders on the booking page). -->
+          <img
+            src="./text part logo transparent.png"
+            alt="Celebration Creation Decor"
+            class="logo-brand-img h-12 md:h-16 w-auto"
+            onerror="document.body.setAttribute('data-brand', 'text');"
+          />
+          <!-- Text fallback for data-brand="text" mode. -->
+          <span
+            class="logo-brand-text nav-brand serif text-lg md:text-xl font-medium tracking-tight text-cream"
+          >
+            Celebration <span class="italic font-normal">Creation</span> Decor
+          </span>
+        </a>
+        <div class="hidden md:flex items-center gap-9 text-sm">
+          <a
+            href="./index.html#what-we-style"
+            class="nav-link text-cream/90 hover:text-terracotta transition-colors"
+            >What we style</a
+          >
+          <a
+            href="./index.html#featured"
+            class="nav-link text-cream/90 hover:text-terracotta transition-colors"
+            >Recent events</a
+          >
+          <a
+            href="./index.html#process"
+            class="nav-link text-cream/90 hover:text-terracotta transition-colors"
+            >Our process</a
+          >
+          <a
+            href="./book.html"
+            class="nav-link text-cream/90 hover:text-terracotta transition-colors"
+            >Packages</a
+          >
+          <a
+            href="./index.html#inquire"
+            class="nav-link text-cream/90 hover:text-terracotta transition-colors"
+            >Inquire</a
+          >
+        </div>
+        <button
+          aria-label="Open menu"
+          class="md:hidden text-cream"
+          onclick="document.getElementById('mobile-menu').classList.toggle('hidden')"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-6 h-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"
+            />
+          </svg>
+        </button>
+      </div>
+      <div
+        id="mobile-menu"
+        class="hidden md:hidden mt-4 pb-3 flex flex-col gap-3 text-sm text-cream"
+      >
+        <a href="./index.html#what-we-style" class="nav-link">What we style</a>
+        <a href="./index.html#featured" class="nav-link">Recent events</a>
+        <a href="./index.html#process" class="nav-link">Our process</a>
+        <a href="./book.html" class="nav-link">Packages</a>
+        <a href="./index.html#inquire" class="nav-link">Inquire</a>
+      </div>
+    </nav>
+
+    <!-- ============================= INTRO ============================= -->
+    <!-- pt-32 md:pt-36 reserves space at the top for the now-fixed
+         nav so content doesn't render underneath it. Was pt-12
+         md:pt-20 when nav was sticky (sticky reserves its own space
+         in the document flow; fixed does not). -->
+    <section class="px-6 md:px-10 pt-32 md:pt-36 pb-8 md:pb-12">
+      <div class="mx-auto max-w-7xl">
+        <p
+          class="text-terracotta text-xs font-medium uppercase tracking-[0.25em] mb-4"
+        >
+          Book your event
+        </p>
+        <h1
+          class="serif text-3xl md:text-5xl leading-[1.1] tracking-tight max-w-3xl"
+        >
+          Build your <span class="italic">luxury picnic</span>.
+        </h1>
+        <p class="mt-5 text-ink/70 max-w-2xl text-base leading-relaxed">
+          Pick a base setup, add the extras you want, share the details. We
+          set everything up before you arrive and break it down after — you
+          just show up.
+        </p>
+      </div>
+    </section>
+
+    <div class="px-6 md:px-10 pb-32 lg:pb-20">
+      <div class="mx-auto max-w-7xl grid lg:grid-cols-[1fr_360px] gap-10">
+        <!-- ============================= LEFT: BUILDER ============================= -->
+        <div>
+          <!-- STEP 1: PACKAGE -->
+          <section class="mb-14 md:mb-20">
+            <div class="flex items-baseline gap-4 mb-7">
+              <span class="step-num">01</span>
+              <h2 class="serif text-2xl md:text-3xl tracking-tight">
+                Pick your package
+              </h2>
+            </div>
+
+            <div class="grid sm:grid-cols-2 gap-4">
+              <!-- Package: Sweet Setup -->
+              <label class="block relative">
+                <input
+                  type="radio"
+                  name="package"
+                  value="sweet"
+                  data-price="250"
+                  data-label="Sweet Setup"
+                  data-guests="2"
+                />
+                <div class="package-card p-6 rounded-md h-full bg-cream">
+                  <div class="flex items-start justify-between mb-3">
+                    <div>
+                      <p class="serif text-xl tracking-tight">
+                        Sweet Setup
+                      </p>
+                      <p class="text-xs text-muted mt-1 uppercase tracking-[0.18em]">
+                        2 guests · 2 hours
+                      </p>
+                    </div>
+                    <div
+                      class="pkg-check w-6 h-6 rounded-full border-1.5 border-border flex items-center justify-center mt-1"
+                    >
+                      <svg class="w-3.5 h-3.5 text-cream" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M7.629 13.314l7.071-7.07 1.414 1.413-8.485 8.486-4.95-4.95 1.415-1.414 3.535 3.535z"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <p class="serif text-3xl text-ink mt-1 mb-4">$250</p>
+                  <ul class="text-sm text-ink/70 space-y-1.5 leading-relaxed">
+                    <li>Low cedar table, vintage rug</li>
+                    <li>Tablescape styling for 2</li>
+                    <li>Florals + taper candles</li>
+                    <li>Bluetooth speaker</li>
+                  </ul>
+                </div>
+              </label>
+
+              <!-- Package: The Standard -->
+              <label class="block relative">
+                <input
+                  type="radio"
+                  name="package"
+                  value="standard"
+                  data-price="375"
+                  data-label="The Standard"
+                  data-guests="4"
+                  checked
+                />
+                <div class="package-card p-6 rounded-md h-full bg-cream">
+                  <div class="flex items-start justify-between mb-3">
+                    <div>
+                      <p class="serif text-xl tracking-tight">
+                        The Standard
+                        <span
+                          class="ml-1 text-[10px] uppercase tracking-[0.2em] text-terracotta align-middle"
+                          >Most popular</span
+                        >
+                      </p>
+                      <p class="text-xs text-muted mt-1 uppercase tracking-[0.18em]">
+                        4 guests · 3 hours
+                      </p>
+                    </div>
+                    <div
+                      class="pkg-check w-6 h-6 rounded-full border-1.5 border-border flex items-center justify-center mt-1"
+                    >
+                      <svg class="w-3.5 h-3.5 text-cream" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M7.629 13.314l7.071-7.07 1.414 1.413-8.485 8.486-4.95-4.95 1.415-1.414 3.535 3.535z"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <p class="serif text-3xl text-ink mt-1 mb-4">$375</p>
+                  <ul class="text-sm text-ink/70 space-y-1.5 leading-relaxed">
+                    <li>Everything in Sweet Setup</li>
+                    <li>Seating for 4 with layered cushions</li>
+                    <li>Larger floral arrangement</li>
+                    <li>Welcome sign with custom names</li>
+                    <li>Lanterns + extra ambient lighting</li>
+                  </ul>
+                </div>
+              </label>
+
+              <!-- Package: The Soirée -->
+              <label class="block relative">
+                <input
+                  type="radio"
+                  name="package"
+                  value="soiree"
+                  data-price="500"
+                  data-label="The Soirée"
+                  data-guests="6"
+                />
+                <div class="package-card p-6 rounded-md h-full bg-cream">
+                  <div class="flex items-start justify-between mb-3">
+                    <div>
+                      <p class="serif text-xl tracking-tight">
+                        The Soirée
+                      </p>
+                      <p class="text-xs text-muted mt-1 uppercase tracking-[0.18em]">
+                        6 guests · 3 hours
+                      </p>
+                    </div>
+                    <div
+                      class="pkg-check w-6 h-6 rounded-full border-1.5 border-border flex items-center justify-center mt-1"
+                    >
+                      <svg class="w-3.5 h-3.5 text-cream" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M7.629 13.314l7.071-7.07 1.414 1.413-8.485 8.486-4.95-4.95 1.415-1.414 3.535 3.535z"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <p class="serif text-3xl text-ink mt-1 mb-4">$500</p>
+                  <ul class="text-sm text-ink/70 space-y-1.5 leading-relaxed">
+                    <li>Everything in The Standard</li>
+                    <li>Seating for 6, premium cushions</li>
+                    <li>Dual floral centerpieces</li>
+                    <li>Pampas grass photo backdrop</li>
+                    <li>Curated playlist + speaker</li>
+                  </ul>
+                </div>
+              </label>
+
+              <!-- Package: Grande Gathering -->
+              <label class="block relative">
+                <input
+                  type="radio"
+                  name="package"
+                  value="grande"
+                  data-price="750"
+                  data-label="Grande Gathering"
+                  data-guests="10"
+                />
+                <div class="package-card p-6 rounded-md h-full bg-cream">
+                  <div class="flex items-start justify-between mb-3">
+                    <div>
+                      <p class="serif text-xl tracking-tight">
+                        Grande Gathering
+                      </p>
+                      <p class="text-xs text-muted mt-1 uppercase tracking-[0.18em]">
+                        8–10 guests · 4 hours
+                      </p>
+                    </div>
+                    <div
+                      class="pkg-check w-6 h-6 rounded-full border-1.5 border-border flex items-center justify-center mt-1"
+                    >
+                      <svg class="w-3.5 h-3.5 text-cream" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M7.629 13.314l7.071-7.07 1.414 1.413-8.485 8.486-4.95-4.95 1.415-1.414 3.535 3.535z"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <p class="serif text-3xl text-ink mt-1 mb-4">$750</p>
+                  <ul class="text-sm text-ink/70 space-y-1.5 leading-relaxed">
+                    <li>Everything in The Soirée</li>
+                    <li>Extended table + seating for 10</li>
+                    <li>Premium florals + dried garlands</li>
+                    <li>Backdrop with custom marquee letters</li>
+                    <li>Full styling, setup, and break-down</li>
+                  </ul>
+                </div>
+              </label>
+            </div>
+          </section>
+
+          <!-- STEP 2: ADD-ONS -->
+          <section class="mb-14 md:mb-20">
+            <div class="flex items-baseline gap-4 mb-7">
+              <span class="step-num">02</span>
+              <h2 class="serif text-2xl md:text-3xl tracking-tight">
+                Add the extras
+              </h2>
+            </div>
+
+            <div class="grid sm:grid-cols-2 gap-3">
+              <!-- Add-ons template -->
+              <label class="block relative">
+                <input type="checkbox" name="addon-charcuterie" data-price="75" data-label="Charcuterie board" />
+                <div class="addon-row p-4 rounded-md flex items-start gap-3">
+                  <div
+                    class="addon-check w-5 h-5 rounded-sm border-1.5 border-border flex items-center justify-center mt-0.5 shrink-0"
+                  >
+                    <svg class="w-3 h-3 text-cream" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M7.629 13.314l7.071-7.07 1.414 1.413-8.485 8.486-4.95-4.95 1.415-1.414 3.535 3.535z"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1 flex items-start justify-between gap-3">
+                    <div>
+                      <p class="text-sm font-medium">Charcuterie board</p>
+                      <p class="text-xs text-muted mt-0.5">
+                        Cheeses, meats, fruit, crackers — serves 2-4
+                      </p>
+                    </div>
+                    <p class="serif text-base shrink-0">+$75</p>
+                  </div>
+                </div>
+              </label>
+
+              <label class="block relative">
+                <input type="checkbox" name="addon-florals" data-price="100" data-label="Premium floral upgrade" />
+                <div class="addon-row p-4 rounded-md flex items-start gap-3">
+                  <div class="addon-check w-5 h-5 rounded-sm border-1.5 border-border flex items-center justify-center mt-0.5 shrink-0">
+                    <svg class="w-3 h-3 text-cream" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M7.629 13.314l7.071-7.07 1.414 1.413-8.485 8.486-4.95-4.95 1.415-1.414 3.535 3.535z"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1 flex items-start justify-between gap-3">
+                    <div>
+                      <p class="text-sm font-medium">Premium floral upgrade</p>
+                      <p class="text-xs text-muted mt-0.5">
+                        Larger fresh arrangements, seasonal blooms
+                      </p>
+                    </div>
+                    <p class="serif text-base shrink-0">+$100</p>
+                  </div>
+                </div>
+              </label>
+
+              <label class="block relative">
+                <input type="checkbox" name="addon-champagne" data-price="60" data-label="Champagne setup" />
+                <div class="addon-row p-4 rounded-md flex items-start gap-3">
+                  <div class="addon-check w-5 h-5 rounded-sm border-1.5 border-border flex items-center justify-center mt-0.5 shrink-0">
+                    <svg class="w-3 h-3 text-cream" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M7.629 13.314l7.071-7.07 1.414 1.413-8.485 8.486-4.95-4.95 1.415-1.414 3.535 3.535z"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1 flex items-start justify-between gap-3">
+                    <div>
+                      <p class="text-sm font-medium">Champagne setup</p>
+                      <p class="text-xs text-muted mt-0.5">
+                        Bottle of bubbly with stemless flutes + bucket
+                      </p>
+                    </div>
+                    <p class="serif text-base shrink-0">+$60</p>
+                  </div>
+                </div>
+              </label>
+
+              <label class="block relative">
+                <input type="checkbox" name="addon-marquee" data-price="45" data-label="Custom marquee letters" />
+                <div class="addon-row p-4 rounded-md flex items-start gap-3">
+                  <div class="addon-check w-5 h-5 rounded-sm border-1.5 border-border flex items-center justify-center mt-0.5 shrink-0">
+                    <svg class="w-3 h-3 text-cream" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M7.629 13.314l7.071-7.07 1.414 1.413-8.485 8.486-4.95-4.95 1.415-1.414 3.535 3.535z"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1 flex items-start justify-between gap-3">
+                    <div>
+                      <p class="text-sm font-medium">Custom marquee letters</p>
+                      <p class="text-xs text-muted mt-0.5">
+                        Initials, name, or short word — light-up display
+                      </p>
+                    </div>
+                    <p class="serif text-base shrink-0">+$45</p>
+                  </div>
+                </div>
+              </label>
+
+              <label class="block relative">
+                <input type="checkbox" name="addon-polaroid" data-price="40" data-label="Polaroid camera + film" />
+                <div class="addon-row p-4 rounded-md flex items-start gap-3">
+                  <div class="addon-check w-5 h-5 rounded-sm border-1.5 border-border flex items-center justify-center mt-0.5 shrink-0">
+                    <svg class="w-3 h-3 text-cream" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M7.629 13.314l7.071-7.07 1.414 1.413-8.485 8.486-4.95-4.95 1.415-1.414 3.535 3.535z"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1 flex items-start justify-between gap-3">
+                    <div>
+                      <p class="text-sm font-medium">Polaroid camera + film</p>
+                      <p class="text-xs text-muted mt-0.5">
+                        Two packs of film. Guests keep the prints.
+                      </p>
+                    </div>
+                    <p class="serif text-base shrink-0">+$40</p>
+                  </div>
+                </div>
+              </label>
+
+              <label class="block relative">
+                <input type="checkbox" name="addon-games" data-price="30" data-label="Lawn games" />
+                <div class="addon-row p-4 rounded-md flex items-start gap-3">
+                  <div class="addon-check w-5 h-5 rounded-sm border-1.5 border-border flex items-center justify-center mt-0.5 shrink-0">
+                    <svg class="w-3 h-3 text-cream" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M7.629 13.314l7.071-7.07 1.414 1.413-8.485 8.486-4.95-4.95 1.415-1.414 3.535 3.535z"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1 flex items-start justify-between gap-3">
+                    <div>
+                      <p class="text-sm font-medium">Lawn games</p>
+                      <p class="text-xs text-muted mt-0.5">
+                        Bocce, cornhole, or giant Jenga — pick on next step
+                      </p>
+                    </div>
+                    <p class="serif text-base shrink-0">+$30</p>
+                  </div>
+                </div>
+              </label>
+
+              <label class="block relative">
+                <input type="checkbox" name="addon-extrahour" data-price="75" data-label="Extra hour" />
+                <div class="addon-row p-4 rounded-md flex items-start gap-3">
+                  <div class="addon-check w-5 h-5 rounded-sm border-1.5 border-border flex items-center justify-center mt-0.5 shrink-0">
+                    <svg class="w-3 h-3 text-cream" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M7.629 13.314l7.071-7.07 1.414 1.413-8.485 8.486-4.95-4.95 1.415-1.414 3.535 3.535z"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1 flex items-start justify-between gap-3">
+                    <div>
+                      <p class="text-sm font-medium">Extra hour</p>
+                      <p class="text-xs text-muted mt-0.5">
+                        Extend the picnic past the package duration
+                      </p>
+                    </div>
+                    <p class="serif text-base shrink-0">+$75</p>
+                  </div>
+                </div>
+              </label>
+
+              <label class="block relative">
+                <input type="checkbox" name="addon-backdrop" data-price="50" data-label="Photo backdrop / sign" />
+                <div class="addon-row p-4 rounded-md flex items-start gap-3">
+                  <div class="addon-check w-5 h-5 rounded-sm border-1.5 border-border flex items-center justify-center mt-0.5 shrink-0">
+                    <svg class="w-3 h-3 text-cream" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M7.629 13.314l7.071-7.07 1.414 1.413-8.485 8.486-4.95-4.95 1.415-1.414 3.535 3.535z"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1 flex items-start justify-between gap-3">
+                    <div>
+                      <p class="text-sm font-medium">Photo backdrop</p>
+                      <p class="text-xs text-muted mt-0.5">
+                        Pampas grass or fresh-floral wall, painted sign
+                      </p>
+                    </div>
+                    <p class="serif text-base shrink-0">+$50</p>
+                  </div>
+                </div>
+              </label>
+            </div>
+          </section>
+
+          <!-- STEP 3: EVENT DETAILS -->
+          <section>
+            <div class="flex items-baseline gap-4 mb-7">
+              <span class="step-num">03</span>
+              <h2 class="serif text-2xl md:text-3xl tracking-tight">
+                Event details
+              </h2>
+            </div>
+
+            <div class="grid sm:grid-cols-2 gap-4">
+              <label>
+                <span class="field-label">Full name</span>
+                <input type="text" class="field" placeholder="Jane Doe" />
+              </label>
+              <label>
+                <span class="field-label">Email</span>
+                <input
+                  type="email"
+                  class="field"
+                  id="event-email"
+                  placeholder="you@example.com"
+                />
+              </label>
+              <label>
+                <span class="field-label">Phone</span>
+                <input
+                  type="tel"
+                  class="field"
+                  placeholder="(555) 555-5555"
+                />
+              </label>
+              <label>
+                <span class="field-label">Event date</span>
+                <input type="date" class="field" />
+              </label>
+              <label>
+                <span class="field-label">Start time</span>
+                <input type="time" class="field" />
+              </label>
+              <label>
+                <span class="field-label">Location</span>
+                <input
+                  type="text"
+                  class="field"
+                  placeholder="Backyard, beach, park name..."
+                />
+              </label>
+            </div>
+
+            <label class="block mt-4">
+              <span class="field-label"
+                >Any special requests?
+                <span class="text-muted/70 normal-case tracking-normal"
+                  >(optional)</span
+                ></span
+              >
+              <textarea
+                rows="4"
+                class="field leading-relaxed"
+                placeholder="Color palette ideas, dietary notes for the charcuterie, surprise occasion details, anything else we should know..."
+              ></textarea>
+            </label>
+          </section>
+        </div>
+
+        <!-- ============================= RIGHT: ORDER SUMMARY (desktop) ============================= -->
+        <aside class="hidden lg:block">
+          <div class="sticky top-24 bg-cream-warm rounded-md border border-border p-6">
+            <p
+              class="text-xs uppercase tracking-[0.25em] text-muted mb-4"
+            >
+              Your order
+            </p>
+
+            <div class="mb-4 pb-4 border-b border-border">
+              <p class="serif text-lg" id="summary-package">The Standard</p>
+              <p class="text-xs text-muted mt-1" id="summary-guests">
+                4 guests · 3 hours
+              </p>
+            </div>
+
+            <div id="summary-lines" class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-ink/80" id="summary-pkg-label">The Standard</span>
+                <span id="summary-pkg-price">$375</span>
+              </div>
+              <!-- Add-on lines injected by JS. -->
+            </div>
+
+            <div class="mt-5 pt-5 border-t border-border space-y-2 text-sm">
+              <div class="flex justify-between text-ink/70">
+                <span>Subtotal</span>
+                <span id="summary-subtotal">$375</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="serif text-lg">Total</span>
+                <span class="serif text-2xl text-ink" id="summary-total"
+                  >$375</span
+                >
+              </div>
+              <p class="text-xs text-muted leading-relaxed mt-2">
+                A 50% deposit reserves your date. Balance due 48h before
+                the event. Cancellations 14+ days out are fully refundable.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onclick="goToCheckout()"
+              class="mt-6 w-full bg-ink hover:bg-terracotta text-cream py-4 text-sm font-medium tracking-wide transition-colors flex items-center justify-center gap-2"
+            >
+              Continue to checkout
+              <span aria-hidden>→</span>
+            </button>
+
+            <div
+              class="mt-4 flex items-center justify-center gap-2 text-xs text-muted"
+            >
+              <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  d="M10 1.667a8.333 8.333 0 100 16.666 8.333 8.333 0 000-16.666zM10 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"
+                />
+                <path d="M9.167 6.667h1.666v4.166H9.167V6.667zM9.167 12.5h1.666v1.667H9.167V12.5z"/>
+              </svg>
+              Secure checkout powered by Stripe
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- ============================= MOBILE FOOTER SUMMARY ============================= -->
+    <div class="summary-mobile lg:hidden">
+      <button
+        type="button"
+        onclick="document.getElementById('mobile-summary-body').classList.toggle('hidden')"
+        class="w-full flex items-center justify-between px-6 py-4"
+      >
+        <div class="text-left">
+          <p class="text-xs uppercase tracking-[0.25em] text-muted">
+            Total
+          </p>
+          <p class="serif text-2xl mt-1" id="mobile-total">$375</p>
+        </div>
+        <span class="text-terracotta text-xs uppercase tracking-[0.18em]"
+          >View details ↑</span
+        >
+      </button>
+      <div id="mobile-summary-body" class="hidden px-6 pb-5 border-t border-border pt-4">
+        <div id="mobile-summary-lines" class="space-y-2 text-sm mb-4">
+          <!-- injected -->
+        </div>
+        <button
+          type="button"
+          onclick="goToCheckout()"
+          class="w-full bg-ink hover:bg-terracotta text-cream py-4 text-sm font-medium tracking-wide transition-colors flex items-center justify-center gap-2"
+        >
+          Continue to checkout
+          <span aria-hidden>→</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ============================= STRIPE-LIKE CHECKOUT PREVIEW MODAL ============================= -->
+    <div
+      id="checkout-preview"
+      class="hidden fixed inset-0 z-[100] flex items-start sm:items-center justify-center px-4 py-8 overflow-y-auto"
+      style="background-color: rgba(26, 26, 26, 0.65);"
+    >
+      <div class="bg-white rounded-md w-full max-w-md shadow-2xl overflow-hidden">
+        <!-- Test mode banner — honest signal this is a demo. -->
+        <div
+          class="bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs text-center text-amber-900"
+        >
+          <span class="font-semibold">Test mode</span> · No real charge. Try
+          <span class="font-mono">4242 4242 4242 4242</span> + any future
+          date + any 3-digit CVC.
+        </div>
+
+        <div class="px-6 py-5 border-b border-border flex items-center justify-between">
+          <p class="serif text-base">Checkout · Preview</p>
+          <button
+            onclick="closeCheckout()"
+            class="text-muted hover:text-ink text-xl leading-none"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+
+        <!-- ===== FORM VIEW (default) ===== -->
+        <div id="checkout-form" class="px-6 py-6">
+          <p class="text-xs uppercase tracking-[0.25em] text-muted mb-3">
+            Order summary
+          </p>
+          <div id="checkout-lines" class="space-y-2 text-sm mb-4">
+            <!-- injected -->
+          </div>
+          <div class="border-t border-border pt-3 flex justify-between items-baseline">
+            <span class="serif text-lg">Total due</span>
+            <span class="serif text-2xl" id="checkout-total">$375</span>
+          </div>
+          <p class="text-xs text-muted mt-2 leading-relaxed">
+            Charging 50% deposit today. Balance billed 48h before your
+            event.
+          </p>
+
+          <div class="mt-6 space-y-3">
+            <div class="relative">
+              <input
+                type="text"
+                id="checkout-card"
+                inputmode="numeric"
+                autocomplete="cc-number"
+                placeholder="Card number"
+                class="field font-mono pr-12"
+                maxlength="19"
+              />
+              <span
+                id="card-brand"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted"
+              ></span>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <input
+                type="text"
+                id="checkout-expiry"
+                inputmode="numeric"
+                autocomplete="cc-exp"
+                placeholder="MM / YY"
+                class="field font-mono"
+                maxlength="7"
+              />
+              <input
+                type="text"
+                id="checkout-cvc"
+                inputmode="numeric"
+                autocomplete="cc-csc"
+                placeholder="CVC"
+                class="field font-mono"
+                maxlength="4"
+              />
+            </div>
+            <input
+              type="text"
+              id="checkout-zip"
+              inputmode="numeric"
+              autocomplete="postal-code"
+              placeholder="ZIP / Postal"
+              class="field font-mono"
+              maxlength="10"
+            />
+          </div>
+
+          <div
+            id="checkout-error"
+            class="hidden mt-3 text-xs text-red-700 bg-red-50 border border-red-200 px-3 py-2 rounded-sm"
+          ></div>
+
+          <button
+            id="checkout-pay"
+            type="button"
+            class="mt-6 w-full bg-ink hover:bg-terracotta text-cream py-4 text-sm font-medium tracking-wide transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+            onclick="handlePay()"
+          >
+            Pay 50% deposit · <span id="checkout-deposit">$187.50</span>
+          </button>
+
+          <p class="text-[10px] text-muted text-center mt-4 leading-relaxed">
+            Mockup form — no card data leaves this browser. In the live
+            build, the real flow uses Stripe Elements (PCI-compliant
+            iframed inputs) and redirects to Stripe-hosted checkout.
+          </p>
+        </div>
+
+        <!-- ===== SUCCESS VIEW (hidden until pay) =====
+             Staged-reveal animation choreographed by CSS via the
+             .animate-in class on this container. JS adds the class
+             after a force-reflow so it replays cleanly on each open. -->
+        <div id="checkout-success" class="hidden px-6 py-10 text-center">
+          <!-- Checkmark composition: pulsing ring layer behind, then
+               the circle (pops in), then the SVG check (draws in). -->
+          <div class="relative w-20 h-20 mx-auto mb-6">
+            <span
+              class="success-ring absolute inset-0 rounded-full"
+              style="background-color: rgba(130, 191, 149, 0.35);"
+              aria-hidden="true"
+            ></span>
+            <div
+              class="success-circle relative w-20 h-20 rounded-full flex items-center justify-center"
+              style="background-color: #e9f5ec; border: 2px solid #82bf95;"
+            >
+              <svg
+                class="w-10 h-10"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#1f7a36"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path class="success-check" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          </div>
+
+          <p
+            class="serif text-2xl mb-2 tracking-tight success-stagger success-heading"
+          >
+            Booking confirmed
+          </p>
+          <p
+            class="text-sm text-ink/70 mb-6 leading-relaxed success-stagger success-desc"
+          >
+            We've charged a 50% deposit of
+            <span id="success-deposit" class="font-medium">$187.50</span>
+            to the card ending in
+            <span id="success-last4" class="font-mono">4242</span>.
+            Confirmation email on the way to
+            <span id="success-email" class="font-medium">you</span>.
+          </p>
+
+          <div
+            class="bg-cream-warm rounded-md p-4 text-sm text-left mb-6 border border-border success-stagger success-summary-card"
+          >
+            <p class="text-xs uppercase tracking-[0.18em] text-muted mb-3">
+              Your booking
+            </p>
+            <div id="success-summary" class="space-y-1.5"></div>
+            <div
+              class="mt-3 pt-3 border-t border-border flex justify-between"
+            >
+              <span class="text-ink/70">Balance due 48h before event</span>
+              <span class="font-medium" id="success-balance">$187.50</span>
+            </div>
+          </div>
+
+          <button
+            onclick="closeCheckout()"
+            class="text-sm text-terracotta hover:text-terracotta-dark font-medium success-stagger success-close"
+          >
+            Close →
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================= JS: live total + summary ============================= -->
+    <script>
+      const fmt = (n) =>
+        '$' +
+        n.toLocaleString('en-US', {
+          minimumFractionDigits: n % 1 === 0 ? 0 : 2,
+          maximumFractionDigits: 2,
+        });
+
+      function getSelectedPackage() {
+        return document.querySelector('input[name="package"]:checked');
+      }
+      function getSelectedAddons() {
+        return Array.from(
+          document.querySelectorAll('input[name^="addon-"]:checked')
+        );
+      }
+
+      function recompute() {
+        const pkg = getSelectedPackage();
+        const pkgPrice = pkg ? Number(pkg.dataset.price) : 0;
+        const pkgLabel = pkg ? pkg.dataset.label : '—';
+        const pkgGuests = pkg ? pkg.dataset.guests : '';
+
+        const addons = getSelectedAddons();
+        const addonsTotal = addons.reduce(
+          (sum, a) => sum + Number(a.dataset.price),
+          0
+        );
+        const subtotal = pkgPrice + addonsTotal;
+        const deposit = subtotal / 2;
+
+        // Desktop summary
+        document.getElementById('summary-package').textContent = pkgLabel;
+        document.getElementById('summary-guests').textContent =
+          pkgGuests + ' guests';
+        document.getElementById('summary-pkg-label').textContent = pkgLabel;
+        document.getElementById('summary-pkg-price').textContent =
+          fmt(pkgPrice);
+
+        const linesEl = document.getElementById('summary-lines');
+        // remove all addon lines (anything after the first child)
+        while (linesEl.children.length > 1) {
+          linesEl.removeChild(linesEl.lastChild);
+        }
+        addons.forEach((a) => {
+          const row = document.createElement('div');
+          row.className = 'flex justify-between text-ink/80';
+          row.innerHTML = `<span>${a.dataset.label}</span><span>+${fmt(
+            Number(a.dataset.price)
+          )}</span>`;
+          linesEl.appendChild(row);
+        });
+
+        document.getElementById('summary-subtotal').textContent =
+          fmt(subtotal);
+        document.getElementById('summary-total').textContent = fmt(subtotal);
+
+        // Mobile summary
+        document.getElementById('mobile-total').textContent = fmt(subtotal);
+        const mobileLines = document.getElementById('mobile-summary-lines');
+        mobileLines.innerHTML = `
+          <div class="flex justify-between text-ink/80">
+            <span>${pkgLabel}</span><span>${fmt(pkgPrice)}</span>
+          </div>
+          ${addons
+            .map(
+              (a) =>
+                `<div class="flex justify-between text-ink/80"><span>${a.dataset.label}</span><span>+${fmt(
+                  Number(a.dataset.price)
+                )}</span></div>`
+            )
+            .join('')}
+          <div class="flex justify-between pt-2 border-t border-border">
+            <span class="serif text-base">Total</span>
+            <span class="serif text-lg">${fmt(subtotal)}</span>
+          </div>
+        `;
+
+        // Checkout preview modal
+        const checkoutLines = document.getElementById('checkout-lines');
+        checkoutLines.innerHTML = `
+          <div class="flex justify-between"><span>${pkgLabel}</span><span>${fmt(
+            pkgPrice
+          )}</span></div>
+          ${addons
+            .map(
+              (a) =>
+                `<div class="flex justify-between"><span>${a.dataset.label}</span><span>+${fmt(
+                  Number(a.dataset.price)
+                )}</span></div>`
+            )
+            .join('')}
+        `;
+        document.getElementById('checkout-total').textContent = fmt(subtotal);
+        document.getElementById('checkout-deposit').textContent =
+          fmt(deposit);
+      }
+
+      function goToCheckout() {
+        // Reset to form view every time we open the modal. Clear any
+        // animation classes so the next success reveal starts clean.
+        const formEl = document.getElementById('checkout-form');
+        const successEl = document.getElementById('checkout-success');
+        formEl.classList.remove('hidden', 'fading');
+        successEl.classList.add('hidden');
+        successEl.classList.remove('animate-in');
+        document.getElementById('checkout-error').classList.add('hidden');
+        document.getElementById('checkout-preview').classList.remove('hidden');
+      }
+
+      function closeCheckout() {
+        document.getElementById('checkout-preview').classList.add('hidden');
+      }
+
+      // ===== Card form input formatting =====
+
+      // Detect Visa/Mastercard/Amex/Discover from the first few digits so
+      // the right brand label appears in the corner of the card field.
+      function detectBrand(digits) {
+        if (/^4/.test(digits)) return 'VISA';
+        if (/^(5[1-5]|2[2-7])/.test(digits)) return 'MASTERCARD';
+        if (/^3[47]/.test(digits)) return 'AMEX';
+        if (/^(6011|65|64[4-9])/.test(digits)) return 'DISCOVER';
+        return '';
+      }
+
+      const cardEl = document.getElementById('checkout-card');
+      const expEl = document.getElementById('checkout-expiry');
+      const cvcEl = document.getElementById('checkout-cvc');
+      const zipEl = document.getElementById('checkout-zip');
+      const brandEl = document.getElementById('card-brand');
+
+      cardEl.addEventListener('input', (e) => {
+        const digits = e.target.value.replace(/\D/g, '').slice(0, 16);
+        const groups = [];
+        for (let i = 0; i < digits.length; i += 4) {
+          groups.push(digits.slice(i, i + 4));
+        }
+        e.target.value = groups.join(' ');
+        brandEl.textContent = detectBrand(digits);
+      });
+
+      expEl.addEventListener('input', (e) => {
+        const digits = e.target.value.replace(/\D/g, '').slice(0, 4);
+        if (digits.length >= 3) {
+          e.target.value = digits.slice(0, 2) + ' / ' + digits.slice(2);
+        } else {
+          e.target.value = digits;
+        }
+      });
+
+      cvcEl.addEventListener('input', (e) => {
+        e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
+      });
+
+      zipEl.addEventListener('input', (e) => {
+        // Allow alphanumeric for international postcodes.
+        e.target.value = e.target.value
+          .replace(/[^a-zA-Z0-9\s-]/g, '')
+          .slice(0, 10)
+          .toUpperCase();
+      });
+
+      // ===== Pay button: validate, fake processing, transition to success =====
+      function handlePay() {
+        const errEl = document.getElementById('checkout-error');
+        const cardDigits = cardEl.value.replace(/\D/g, '');
+        const expDigits = expEl.value.replace(/\D/g, '');
+        const cvcDigits = cvcEl.value;
+
+        if (cardDigits.length < 13) {
+          showError('Card number looks incomplete.');
+          cardEl.focus();
+          return;
+        }
+        if (expDigits.length < 4) {
+          showError('Expiry date is incomplete. Use MM / YY format.');
+          expEl.focus();
+          return;
+        }
+        // Reasonability check on expiry month.
+        const month = parseInt(expDigits.slice(0, 2), 10);
+        if (month < 1 || month > 12) {
+          showError('Expiry month must be 01-12.');
+          expEl.focus();
+          return;
+        }
+        // Check if expiry is in the past.
+        const year = parseInt('20' + expDigits.slice(2, 4), 10);
+        // Today is treated as 2026-06 for the demo; in production use
+        // new Date() at runtime.
+        const now = new Date();
+        const expDate = new Date(year, month - 1, 1);
+        const cutoff = new Date(now.getFullYear(), now.getMonth(), 1);
+        if (expDate < cutoff) {
+          showError('That card looks expired. Use a future date.');
+          expEl.focus();
+          return;
+        }
+        if (cvcDigits.length < 3) {
+          showError('CVC should be 3 digits (4 for Amex).');
+          cvcEl.focus();
+          return;
+        }
+        if (zipEl.value.replace(/\s/g, '').length < 3) {
+          showError('Please enter your ZIP / postal code.');
+          zipEl.focus();
+          return;
+        }
+
+        errEl.classList.add('hidden');
+
+        // Show loading state on the button.
+        const payBtn = document.getElementById('checkout-pay');
+        payBtn.disabled = true;
+        payBtn.innerHTML = `
+          <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-opacity="0.3" stroke-width="3" />
+            <path d="M12 2 a 10 10 0 0 1 10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none" />
+          </svg>
+          Processing payment...
+        `;
+
+        // Fake 1.5s "talking to Stripe" delay, then transition.
+        setTimeout(() => {
+          // Reset button so it's clean if the modal reopens.
+          payBtn.disabled = false;
+          payBtn.innerHTML = `Pay 50% deposit · <span id="checkout-deposit">$187.50</span>`;
+          showSuccess(cardDigits);
+        }, 1500);
+      }
+
+      function showError(msg) {
+        const errEl = document.getElementById('checkout-error');
+        errEl.textContent = msg;
+        errEl.classList.remove('hidden');
+      }
+
+      function showSuccess(cardDigits) {
+        // Populate the success view with real numbers from the current
+        // selection + the last 4 of the card the user actually typed.
+        const pkg = getSelectedPackage();
+        const pkgLabel = pkg ? pkg.dataset.label : '—';
+        const pkgPrice = pkg ? Number(pkg.dataset.price) : 0;
+        const addons = getSelectedAddons();
+        const subtotal =
+          pkgPrice +
+          addons.reduce((s, a) => s + Number(a.dataset.price), 0);
+        const deposit = subtotal / 2;
+        const balance = subtotal - deposit;
+
+        const emailField = document.getElementById('event-email');
+        const emailVal = emailField ? emailField.value.trim() : '';
+
+        document.getElementById('success-deposit').textContent = fmt(deposit);
+        document.getElementById('success-balance').textContent = fmt(balance);
+        document.getElementById('success-last4').textContent =
+          cardDigits.slice(-4);
+        document.getElementById('success-email').textContent =
+          emailVal || 'the email you provided';
+
+        // Build the booking summary block.
+        const sumEl = document.getElementById('success-summary');
+        sumEl.innerHTML = `
+          <div class="flex justify-between"><span>${pkgLabel}</span><span>${fmt(
+            pkgPrice
+          )}</span></div>
+          ${addons
+            .map(
+              (a) =>
+                `<div class="flex justify-between"><span>${a.dataset.label}</span><span>+${fmt(
+                  Number(a.dataset.price)
+                )}</span></div>`
+            )
+            .join('')}
+          <div class="flex justify-between pt-2 border-t border-border mt-2">
+            <span class="font-medium">Total</span>
+            <span class="font-medium">${fmt(subtotal)}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-ink/70">Deposit charged today</span>
+            <span class="text-ink/70">${fmt(deposit)}</span>
+          </div>
+        `;
+
+        // Staged transition:
+        //   1. Form fades out gracefully (CSS .fading class triggers
+        //      the keyframe animation declared in <style>)
+        //   2. After ~280ms the form is hidden and success is revealed
+        //   3. force-reflow trick removes + re-adds .animate-in so the
+        //      staged keyframes replay even if this is the 2nd / 3rd
+        //      success in the same page session
+        const formEl = document.getElementById('checkout-form');
+        const successEl = document.getElementById('checkout-success');
+
+        formEl.classList.add('fading');
+        setTimeout(() => {
+          formEl.classList.add('hidden');
+          formEl.classList.remove('fading');
+
+          successEl.classList.remove('hidden');
+          // Strip then force-reflow then re-add the animate-in class
+          // so each child's keyframe restarts from scratch. Without
+          // this trick the second open of the modal shows the success
+          // state instantly, with no animation.
+          successEl.classList.remove('animate-in');
+          // eslint-disable-next-line no-unused-expressions
+          void successEl.offsetWidth;
+          successEl.classList.add('animate-in');
+        }, 280);
+      }
+
+      // Initial render + listeners
+      document.querySelectorAll('input[name="package"]').forEach((i) =>
+        i.addEventListener('change', recompute)
+      );
+      document.querySelectorAll('input[name^="addon-"]').forEach((i) =>
+        i.addEventListener('change', recompute)
+      );
+      recompute();
+    </script>
+  </body>
+</html>
