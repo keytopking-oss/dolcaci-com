@@ -48,16 +48,11 @@
     />
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
 
-    <!-- PDF stack — three pieces:
-         - html2canvas — turns the DOM into a canvas
-         - jsPDF       — builds the PDF page and accepts the canvas
-         html2pdf.js wraps both into one auto-paginating call but
-         doesn't expose either constructor on window (their globals
-         live inside the bundle). For the custom single-page fit
-         logic we use html2canvas + jsPDF directly. Two small extra
-         downloads (~50KB total) but the code is far simpler. -->
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <!-- PDF generation now uses the browser's native print →
+         "Save as PDF" flow (see downloadInvoicePdf() in JS).
+         No JS PDF library — bulletproof and produces real
+         vector PDFs at any page size. -->
+
 
     <style>
       html {
@@ -386,6 +381,56 @@
       }
       #checkout-success.animate-in .success-close {
         animation: soft-fade-in 420ms 1120ms ease-out forwards;
+      }
+
+      /* ===== PRINT-ONLY INVOICE =====
+         When the Download invoice PDF button fires, JS clones the
+         invoice into #invoice-print-root and toggles body.printing-
+         invoice. These @media print rules hide everything else so
+         the print dialog (and the resulting "Save as PDF" output)
+         shows ONLY the invoice — cream paper edge-to-edge with the
+         browser's print engine handling fit-to-page natively.
+         No JS PDF library = no library quirks. */
+      @media print {
+        @page {
+          size: letter;
+          margin: 0;
+        }
+        body.printing-invoice {
+          background: #fbf8f3 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        /* Hide every direct child of body EXCEPT the print root. */
+        body.printing-invoice > *:not(#invoice-print-root) {
+          display: none !important;
+        }
+        body.printing-invoice #invoice-print-root {
+          display: block !important;
+          background: #fbf8f3 !important;
+          width: 100%;
+          min-height: 100vh;
+        }
+        body.printing-invoice #invoice-print-root #invoice-doc {
+          background: #fbf8f3 !important;
+          border: none !important;
+          border-radius: 0 !important;
+          box-shadow: none !important;
+          opacity: 1 !important;
+          transform: none !important;
+          animation: none !important;
+          margin: 0;
+          padding: 0.4in 0.5in;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        /* Preserve the terracotta accent bar at the top of the
+           invoice when printing — without -webkit-print-color-
+           adjust most browsers strip backgrounds. */
+        body.printing-invoice * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
       }
     </style>
   </head>
@@ -2191,106 +2236,71 @@
       // classes and force opacity: 1 on the cloned invoice. The live
       // on-screen invoice stays untouched — the animation still plays
       // for the user.
-      // Builds a single-page letter-sized PDF of the invoice.
-      // Capture pipeline: html2canvas → jsPDF.addImage with scale-to-fit
-      // math so the whole invoice always lands on page 1 regardless of
-      // how many add-ons were ticked. PDF page is filled cream so any
-      // gutter pixels around the scaled image blend with the paper.
+      // Triggers the browser's native print dialog scoped to just the
+      // invoice. User picks "Save as PDF" in the destination dropdown
+      // and gets a real PDF download — edge-to-edge, no library quirks.
+      //
+      // We tried html2canvas + jsPDF for two days; every combination
+      // either distorted text, left side gutters, or exploded into
+      // 100+ pages on tall canvases. Browsers' print engines have had
+      // 20+ years of native CSS-print-layout work — they handle PDF
+      // generation better than any JS library.
+      //
+      // The flow:
+      //   1. Clone the invoice into a fresh print container at the
+      //      end of <body>, stripped of animation classes
+      //   2. Add a 'printing-invoice' class to <body> — a @media print
+      //      rule hides everything EXCEPT the print container
+      //   3. Call window.print()
+      //   4. After the dialog closes (resolved or canceled), clean up
       function downloadInvoicePdf() {
-        const el = document.getElementById('invoice-doc');
-        const filename =
-          (currentInvoiceNumber || 'celebration-invoice') + '.pdf';
+        const original = document.getElementById('invoice-doc');
+        if (!original) return;
 
-        // Resolve constructors — bail loudly if either CDN didn't load.
-        const jsPDFCtor =
-          (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
-        if (!jsPDFCtor || !window.html2canvas) {
-          console.error(
-            'downloadInvoicePdf: missing library —',
-            'jsPDF=', !!jsPDFCtor,
-            'html2canvas=', !!window.html2canvas
-          );
-          alert(
-            'Sorry — the PDF library didn’t load. Reload and try again.'
-          );
-          return;
-        }
+        // Clone the invoice for printing. Strip the animation classes
+        // so opacity-0 starting state doesn't carry over into print.
+        const clone = original.cloneNode(true);
+        clone.classList.remove(
+          'success-stagger',
+          'success-summary-card',
+          'rounded-md',
+          'border',
+          'border-border'
+        );
+        clone.style.opacity = '1';
+        clone.style.transform = 'none';
+        clone.style.animation = 'none';
+        clone.style.borderRadius = '0';
+        clone.style.border = 'none';
 
-        window
-          .html2canvas(el, {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: '#fbf8f3',
-            // Fired against html2canvas's internal cloned document —
-            // last chance to normalize the DOM before rasterization.
-            onclone: (clonedDoc) => {
-              const cloned = clonedDoc.getElementById('invoice-doc');
-              if (!cloned) return;
-              // Drop entry-animation classes (they enforce opacity: 0).
-              cloned.classList.remove(
-                'success-stagger',
-                'success-summary-card'
-              );
-              cloned.style.opacity = '1';
-              cloned.style.transform = 'none';
-              cloned.style.animation = 'none';
-              // Strip the rounded card chrome so the cream paper
-              // reaches the page edges.
-              cloned.classList.remove(
-                'rounded-md',
-                'border',
-                'border-border'
-              );
-              cloned.style.borderRadius = '0';
-              cloned.style.border = 'none';
-            },
-          })
-          .then((canvas) => {
-            // Simple, reliable approach — one letter page, aspect-
-            // preserve fit. Cream-filled page behind the image catches
-            // any side gutter. Earlier attempts at custom page sizes
-            // or canvas-padding kept triggering jsPDF edge cases that
-            // exploded into 100+ pages — this minimal path is the
-            // shape that consistently produces one page.
-            const pageWidth = 8.5;
-            const pageHeight = 11;
+        const printRoot = document.createElement('div');
+        printRoot.id = 'invoice-print-root';
+        printRoot.appendChild(clone);
+        document.body.appendChild(printRoot);
+        document.body.classList.add('printing-invoice');
 
-            const pdf = new jsPDFCtor({
-              unit: 'in',
-              format: 'letter',
-              orientation: 'portrait',
-            });
-            pdf.setFillColor(251, 248, 243); // #fbf8f3
-            pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+        // Set the document title to the invoice number so the
+        // print dialog's default filename uses it.
+        const originalTitle = document.title;
+        document.title = currentInvoiceNumber || 'celebration-invoice';
 
-            // Fit by width first; if too tall for the page, scale down
-            // proportionally so the whole invoice still lands on a
-            // single page. Centered vertically + horizontally.
-            const canvasAspect = canvas.width / canvas.height;
-            let imgWidth = pageWidth;
-            let imgHeight = pageWidth / canvasAspect;
-            if (imgHeight > pageHeight) {
-              const scale = pageHeight / imgHeight;
-              imgHeight = pageHeight;
-              imgWidth = pageWidth * scale;
-            }
-            const x = (pageWidth - imgWidth) / 2;
-            const y = (pageHeight - imgHeight) / 2;
-
-            pdf.addImage(
-              canvas.toDataURL('image/png'),
-              'PNG',
-              x,
-              y,
-              imgWidth,
-              imgHeight
-            );
-            pdf.save(filename);
-          })
-          .catch((err) => {
-            console.error('downloadInvoicePdf failed:', err);
-            alert('PDF generation failed — see the console for details.');
-          });
+        // Defer print() one tick so layout settles after the DOM
+        // append + class add.
+        setTimeout(() => {
+          window.print();
+          // Cleanup runs after the dialog closes (Chrome / Edge fire
+          // afterprint on both confirm AND cancel). Restore title +
+          // remove the print container + drop the body class.
+          const cleanup = () => {
+            document.body.classList.remove('printing-invoice');
+            if (printRoot.parentNode) printRoot.remove();
+            document.title = originalTitle;
+            window.removeEventListener('afterprint', cleanup);
+          };
+          window.addEventListener('afterprint', cleanup);
+          // Fallback in case afterprint never fires (Safari edge case).
+          setTimeout(cleanup, 5000);
+        }, 50);
       }
 
       // Initial render + listeners.
