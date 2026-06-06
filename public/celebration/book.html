@@ -597,66 +597,20 @@
       <div class="mx-auto max-w-7xl grid lg:grid-cols-[1fr_360px] gap-10">
         <!-- ============================= LEFT: BUILDER ============================= -->
         <div>
-          <!-- STEP 0: EVENT DATE
-               Most fundamental field — customers usually know their
-               date before they know which package tier they want.
-               Surfaced first + echoed in the summary panel so the
-               selected date is visible the whole time. The calendar
-               grays out dates from the hardcoded BOOKED_DATES array
-               in JS below; that becomes a real bookings-API fetch
-               when this graduates to celebrationcreationdecor.com. -->
+          <!-- STEP 01: PICK YOUR SERVICE
+               Page entry point. Until a service tile is clicked,
+               everything below stays hidden (#post-service-content).
+               Keeps the booking flow visually progressive — customer
+               makes ONE clear choice ("what am I booking?") before
+               anything else appears. -->
           <section class="mb-14 md:mb-20">
             <div class="flex items-baseline gap-4 mb-7">
               <span class="step-num">01</span>
               <h2 class="serif text-2xl md:text-3xl tracking-tight">
-                Pick your event date
-              </h2>
-            </div>
-            <p class="text-ink/70 leading-relaxed mb-6 max-w-2xl">
-              Dates already booked show as grayed out. Pick any open
-              date at least 14 days out so we have time to prep.
-            </p>
-            <div class="bg-cream-warm rounded-md border border-border p-5">
-              <label class="block">
-                <span class="field-label">Event date</span>
-                <input
-                  type="text"
-                  id="event-date"
-                  class="field cursor-pointer"
-                  placeholder="Click to choose a date"
-                  readonly
-                />
-              </label>
-              <p
-                id="event-date-readout"
-                class="hidden mt-3 text-sm text-ink/80"
-              >
-                <span class="font-medium text-terracotta">●</span>
-                Selected:
-                <span id="event-date-pretty" class="font-medium"></span>
-                · Balance due
-                <span id="balance-due-pretty" class="font-medium"></span>
-              </p>
-            </div>
-          </section>
-
-          <!-- STEP 2: SERVICE + PACKAGE
-               Two-stage selector: pick a service (Luxury Picnic /
-               Balloon Artistry) first; the matching package tier
-               grid reveals below. Switching service resets the
-               package selection cleanly. -->
-          <section class="mb-14 md:mb-20">
-            <div class="flex items-baseline gap-4 mb-7">
-              <span class="step-num">02</span>
-              <h2 class="serif text-2xl md:text-3xl tracking-tight">
                 Pick your service
               </h2>
             </div>
-
-            <!-- Service tiles. Buttons (not radios) since selecting
-                 one shows a different grid; the package radios
-                 below are the actual form values. -->
-            <div class="grid sm:grid-cols-2 gap-4 mb-8" id="service-tiles">
+            <div class="grid sm:grid-cols-2 gap-4" id="service-tiles">
               <button
                 type="button"
                 class="service-tile p-6 rounded-md bg-cream border border-border text-left transition-all"
@@ -698,15 +652,64 @@
                 </p>
               </button>
             </div>
+          </section>
 
-            <!-- Prompt before a category is picked. Hidden once a
-                 service tile is clicked. -->
-            <p
-              id="package-prompt"
-              class="text-sm text-muted italic text-center py-6"
-            >
-              ↑ Pick a service above to see package tiers.
+          <!-- Wrapper for all post-service steps (date, package,
+               add-ons, event details). Hidden on load — revealed
+               by selectCategory() when a service tile is clicked. -->
+          <div id="post-service-content" class="hidden">
+            <!-- STEP 02: EVENT DATE
+                 Now the second step — customer has committed to a
+                 service, next decision is "when." Availability gates
+                 happen here before they invest time in package +
+                 add-on choices. -->
+            <section class="mb-14 md:mb-20">
+              <div class="flex items-baseline gap-4 mb-7">
+                <span class="step-num">02</span>
+                <h2 class="serif text-2xl md:text-3xl tracking-tight">
+                  Pick your event date
+                </h2>
+              </div>
+            <p class="text-ink/70 leading-relaxed mb-6 max-w-2xl">
+              Dates already booked show as grayed out. Pick any open
+              date at least 14 days out so we have time to prep.
             </p>
+            <div class="bg-cream-warm rounded-md border border-border p-5">
+              <label class="block">
+                <span class="field-label">Event date</span>
+                <input
+                  type="text"
+                  id="event-date"
+                  class="field cursor-pointer"
+                  placeholder="Click to choose a date"
+                  readonly
+                />
+              </label>
+              <p
+                id="event-date-readout"
+                class="hidden mt-3 text-sm text-ink/80"
+              >
+                <span class="font-medium text-terracotta">●</span>
+                Selected:
+                <span id="event-date-pretty" class="font-medium"></span>
+                · Balance due
+                <span id="balance-due-pretty" class="font-medium"></span>
+              </p>
+            </div>
+          </section>
+
+          <!-- STEP 03: PICK YOUR PACKAGE
+               Only the package grid for the SELECTED service is
+               visible — packages-picnic OR packages-balloon, never
+               both. Switching service (back at Step 01) clears
+               any prior package selection cleanly. -->
+          <section class="mb-14 md:mb-20">
+            <div class="flex items-baseline gap-4 mb-7">
+              <span class="step-num">03</span>
+              <h2 class="serif text-2xl md:text-3xl tracking-tight">
+                Pick your package
+              </h2>
+            </div>
 
             <!-- ===== LUXURY PICNIC PACKAGES ===== -->
             <div id="packages-picnic" class="hidden">
@@ -1129,10 +1132,10 @@
             </div>
           </section>
 
-          <!-- STEP 3: ADD-ONS -->
+          <!-- STEP 04: ADD-ONS -->
           <section class="mb-14 md:mb-20">
             <div class="flex items-baseline gap-4 mb-7">
-              <span class="step-num">03</span>
+              <span class="step-num">04</span>
               <h2 class="serif text-2xl md:text-3xl tracking-tight">
                 Add the extras
               </h2>
@@ -1304,10 +1307,10 @@
             </div>
           </section>
 
-          <!-- STEP 4: EVENT DETAILS -->
+          <!-- STEP 05: EVENT DETAILS -->
           <section>
             <div class="flex items-baseline gap-4 mb-7">
-              <span class="step-num">04</span>
+              <span class="step-num">05</span>
               <h2 class="serif text-2xl md:text-3xl tracking-tight">
                 Event details
               </h2>
@@ -1368,6 +1371,7 @@
               ></textarea>
             </label>
           </section>
+          </div><!-- /#post-service-content -->
         </div>
 
         <!-- ============================= RIGHT: ORDER SUMMARY (desktop) ============================= -->
@@ -2084,9 +2088,12 @@
         document.querySelectorAll('.service-tile').forEach((t) => {
           t.classList.toggle('selected', t.dataset.category === cat);
         });
-        // Hide the prompt now that a category exists.
-        const promptEl = document.getElementById('package-prompt');
-        if (promptEl) promptEl.classList.add('hidden');
+        // Reveal the post-service flow (date → package → add-ons →
+        // event details). On first service pick this expands the
+        // whole booking. Subsequent service switches just toggle
+        // the package grids below.
+        const postService = document.getElementById('post-service-content');
+        if (postService) postService.classList.remove('hidden');
         // Show only the matching package grid.
         document
           .getElementById('packages-picnic')
