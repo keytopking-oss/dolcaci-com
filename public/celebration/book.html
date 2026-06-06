@@ -2188,19 +2188,26 @@
           (currentInvoiceNumber || 'celebration-invoice') + '.pdf';
 
         const opts = {
-          margin: 0.4,
+          // margin: 0 = cream paper goes edge-to-edge on the PDF page
+          // (no white gutter around the invoice). The on-screen view
+          // still has rounded corners + an outer border via the card
+          // styling, but those are stripped in onclone below so the
+          // PDF version reaches the page corners.
+          margin: 0,
           filename,
           image: { type: 'jpeg', quality: 0.96 },
           html2canvas: {
             scale: 2,
             useCORS: true,
-            backgroundColor: '#ffffff',
+            backgroundColor: '#fbf8f3',
             // Fires after html2canvas has built its internal clone of
             // the target subtree but BEFORE it rasterizes. Last chance
             // to normalize the DOM for capture.
             onclone: (clonedDoc) => {
               const cloned = clonedDoc.getElementById('invoice-doc');
               if (!cloned) return;
+              // Drop the entry-animation classes so the cloned element
+              // doesn't inherit opacity: 0 from the CSS rule.
               cloned.classList.remove(
                 'success-stagger',
                 'success-summary-card'
@@ -2208,8 +2215,13 @@
               cloned.style.opacity = '1';
               cloned.style.transform = 'none';
               cloned.style.animation = 'none';
-              // Defensive: also wipe these on any descendants that
-              // might have inherited animation-related classes.
+              // Strip the rounded card chrome so the cream paper
+              // extends to the PDF page corners.
+              cloned.classList.remove('rounded-md', 'border', 'border-border');
+              cloned.style.borderRadius = '0';
+              cloned.style.border = 'none';
+              // Defensive: same wipe on any descendant that might
+              // carry the stagger classes.
               cloned
                 .querySelectorAll('.success-stagger, .success-summary-card')
                 .forEach((node) => {
