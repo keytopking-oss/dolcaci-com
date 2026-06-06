@@ -37,6 +37,22 @@
       rel="stylesheet"
     />
 
+    <!-- Flatpickr — lightweight calendar widget used for the event-date
+         picker. The "disable" option lets us gray out the hardcoded
+         "already booked" dates so customers visibly can't pick them.
+         When this mockup graduates to celebrationcreationdecor.com, the
+         disable array gets replaced with a fetch to a real bookings API. -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+
+    <!-- html2pdf.js — turns the rendered invoice DOM into a real PDF
+         download. Lets the customer save / print / forward their
+         booking confirmation. Client-side only; no backend needed. -->
+    <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+
     <style>
       html {
         scroll-behavior: smooth;
@@ -502,10 +518,53 @@
       <div class="mx-auto max-w-7xl grid lg:grid-cols-[1fr_360px] gap-10">
         <!-- ============================= LEFT: BUILDER ============================= -->
         <div>
-          <!-- STEP 1: PACKAGE -->
+          <!-- STEP 0: EVENT DATE
+               Most fundamental field — customers usually know their
+               date before they know which package tier they want.
+               Surfaced first + echoed in the summary panel so the
+               selected date is visible the whole time. The calendar
+               grays out dates from the hardcoded BOOKED_DATES array
+               in JS below; that becomes a real bookings-API fetch
+               when this graduates to celebrationcreationdecor.com. -->
           <section class="mb-14 md:mb-20">
             <div class="flex items-baseline gap-4 mb-7">
               <span class="step-num">01</span>
+              <h2 class="serif text-2xl md:text-3xl tracking-tight">
+                Pick your event date
+              </h2>
+            </div>
+            <p class="text-ink/70 leading-relaxed mb-6 max-w-2xl">
+              Dates already booked show as grayed out. Pick any open
+              date at least 14 days out so we have time to prep.
+            </p>
+            <div class="bg-cream-warm rounded-md border border-border p-5">
+              <label class="block">
+                <span class="field-label">Event date</span>
+                <input
+                  type="text"
+                  id="event-date"
+                  class="field cursor-pointer"
+                  placeholder="Click to choose a date"
+                  readonly
+                />
+              </label>
+              <p
+                id="event-date-readout"
+                class="hidden mt-3 text-sm text-ink/80"
+              >
+                <span class="font-medium text-terracotta">●</span>
+                Selected:
+                <span id="event-date-pretty" class="font-medium"></span>
+                · Balance due
+                <span id="balance-due-pretty" class="font-medium"></span>
+              </p>
+            </div>
+          </section>
+
+          <!-- STEP 2: PACKAGE -->
+          <section class="mb-14 md:mb-20">
+            <div class="flex items-baseline gap-4 mb-7">
+              <span class="step-num">02</span>
               <h2 class="serif text-2xl md:text-3xl tracking-tight">
                 Pick your package
               </h2>
@@ -674,10 +733,10 @@
             </div>
           </section>
 
-          <!-- STEP 2: ADD-ONS -->
+          <!-- STEP 3: ADD-ONS -->
           <section class="mb-14 md:mb-20">
             <div class="flex items-baseline gap-4 mb-7">
-              <span class="step-num">02</span>
+              <span class="step-num">03</span>
               <h2 class="serif text-2xl md:text-3xl tracking-tight">
                 Add the extras
               </h2>
@@ -849,10 +908,10 @@
             </div>
           </section>
 
-          <!-- STEP 3: EVENT DETAILS -->
+          <!-- STEP 4: EVENT DETAILS -->
           <section>
             <div class="flex items-baseline gap-4 mb-7">
-              <span class="step-num">03</span>
+              <span class="step-num">04</span>
               <h2 class="serif text-2xl md:text-3xl tracking-tight">
                 Event details
               </h2>
@@ -880,10 +939,11 @@
                   placeholder="(555) 555-5555"
                 />
               </label>
-              <label>
-                <span class="field-label">Event date</span>
-                <input type="date" class="field" />
-              </label>
+              <!-- Event date now lives in Step 1 (top of page) via the
+                   Flatpickr widget — kept there because date is the
+                   anchor of the whole booking and stays visible in
+                   the summary panel. Removed from this step to avoid
+                   asking twice. -->
               <label>
                 <span class="field-label">Start time</span>
                 <input type="time" class="field" />
@@ -923,6 +983,20 @@
               Your order
             </p>
 
+            <!-- Event date — pulled in from the Step 1 date picker.
+                 Defaults to "Pick a date above" until selected. -->
+            <div class="mb-4 pb-4 border-b border-border">
+              <p class="text-[10px] uppercase tracking-[0.2em] text-muted mb-1">
+                Event date
+              </p>
+              <p
+                class="serif text-base text-ink"
+                id="summary-event-date"
+              >
+                Pick a date above
+              </p>
+            </div>
+
             <div class="mb-4 pb-4 border-b border-border">
               <p class="serif text-lg" id="summary-package">The Standard</p>
               <p class="text-xs text-muted mt-1" id="summary-guests">
@@ -949,9 +1023,25 @@
                   >$375</span
                 >
               </div>
-              <p class="text-xs text-muted leading-relaxed mt-2">
-                A 50% deposit reserves your date. Balance due 48h before
-                the event. Cancellations 14+ days out are fully refundable.
+              <!-- Deposit + balance breakdown — 50% deposit today,
+                   balance due 2 weeks before the event date. The
+                   balance amount + date are computed in JS. -->
+              <div
+                class="mt-3 pt-3 border-t border-border space-y-1.5 text-xs"
+              >
+                <div class="flex justify-between text-ink/80">
+                  <span>Deposit today (50%)</span>
+                  <span class="font-medium" id="summary-deposit">$187.50</span>
+                </div>
+                <div class="flex justify-between text-ink/80">
+                  <span id="summary-balance-label">Balance due (14 days before event)</span>
+                  <span class="font-medium" id="summary-balance">$187.50</span>
+                </div>
+              </div>
+              <p class="text-xs text-muted leading-relaxed mt-3">
+                A 50% deposit reserves your date. Balance billed two weeks
+                before the event. Cancellations 14+ days out are fully
+                refundable.
               </p>
             </div>
 
@@ -1018,7 +1108,11 @@
       class="hidden fixed inset-0 z-[100] flex items-start sm:items-center justify-center px-4 py-8 overflow-y-auto"
       style="background-color: rgba(26, 26, 26, 0.65);"
     >
-      <div class="bg-white rounded-md w-full max-w-md shadow-2xl overflow-hidden">
+      <!-- Bumped to max-w-2xl so the invoice (which replaces the
+           checkout form on success) has room for the BILL TO block
+           + 3-column line-items table. The checkout form sits inside
+           comfortably; address fields use their own grid. -->
+      <div class="bg-white rounded-md w-full max-w-2xl shadow-2xl overflow-hidden">
         <!-- Test mode banner — honest signal this is a demo. -->
         <div
           class="bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs text-center text-amber-900"
@@ -1056,7 +1150,81 @@
             event.
           </p>
 
+          <!-- Contact (email is the canonical address invoice is sent to). -->
           <div class="mt-6 space-y-3">
+            <p
+              class="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted"
+            >
+              Contact
+            </p>
+            <input
+              type="email"
+              id="checkout-email"
+              autocomplete="email"
+              placeholder="Email — invoice goes here"
+              class="field"
+            />
+          </div>
+
+          <!-- Billing address — Tim asked for this so it can render
+               on the invoice's BILL TO block. Stripe's real Checkout
+               also collects this when billing_address_collection is
+               set to 'required'. -->
+          <div class="mt-5 space-y-3">
+            <p
+              class="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted"
+            >
+              Billing address
+            </p>
+            <input
+              type="text"
+              id="checkout-name"
+              autocomplete="cc-name"
+              placeholder="Cardholder name"
+              class="field"
+            />
+            <input
+              type="text"
+              id="checkout-street"
+              autocomplete="address-line1"
+              placeholder="Street address"
+              class="field"
+            />
+            <div class="grid grid-cols-[1fr_90px_90px] gap-3">
+              <input
+                type="text"
+                id="checkout-city"
+                autocomplete="address-level2"
+                placeholder="City"
+                class="field"
+              />
+              <input
+                type="text"
+                id="checkout-state"
+                autocomplete="address-level1"
+                placeholder="State"
+                class="field uppercase"
+                maxlength="2"
+              />
+              <input
+                type="text"
+                id="checkout-zip"
+                inputmode="numeric"
+                autocomplete="postal-code"
+                placeholder="ZIP"
+                class="field font-mono"
+                maxlength="10"
+              />
+            </div>
+          </div>
+
+          <!-- Card details. -->
+          <div class="mt-5 space-y-3">
+            <p
+              class="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted"
+            >
+              Card
+            </p>
             <div class="relative">
               <input
                 type="text"
@@ -1092,15 +1260,6 @@
                 maxlength="4"
               />
             </div>
-            <input
-              type="text"
-              id="checkout-zip"
-              inputmode="numeric"
-              autocomplete="postal-code"
-              placeholder="ZIP / Postal"
-              class="field font-mono"
-              maxlength="10"
-            />
           </div>
 
           <div
@@ -1127,83 +1286,286 @@
         <!-- ===== SUCCESS VIEW (hidden until pay) =====
              Staged-reveal animation choreographed by CSS via the
              .animate-in class on this container. JS adds the class
-             after a force-reflow so it replays cleanly on each open. -->
-        <div id="checkout-success" class="hidden px-6 py-10 text-center">
-          <!-- Checkmark composition: pulsing ring layer behind, then
-               the circle (pops in), then the SVG check (draws in). -->
-          <div class="relative w-20 h-20 mx-auto mb-6">
-            <span
-              class="success-ring absolute inset-0 rounded-full"
-              style="background-color: rgba(130, 191, 149, 0.35);"
-              aria-hidden="true"
-            ></span>
+             after a force-reflow so it replays cleanly on each open.
+             Layout:
+               1. Compact "payment received + invoice sent to email"
+                  confirmation strip at top
+               2. The actual invoice DOM (#invoice-doc) — this is the
+                  exact element html2pdf.js converts to PDF when the
+                  customer hits the Download button
+               3. Action row: Download invoice PDF + Close
+             Brand colors used in the invoice mirror the Milord
+             pattern: dark ink for headers, terracotta as the brand
+             accent (vs Milord's navy + gold), cream for the BILL TO
+             tint, emerald for the PAID stamp. -->
+        <div id="checkout-success" class="hidden px-6 py-6">
+          <!-- Confirmation strip — checkmark + paid-to-email line. -->
+          <div
+            class="success-stagger success-heading flex items-start gap-3 mb-5 pb-5 border-b border-border"
+          >
+            <div class="relative w-10 h-10 shrink-0">
+              <span
+                class="success-ring absolute inset-0 rounded-full"
+                style="background-color: rgba(130, 191, 149, 0.35);"
+                aria-hidden="true"
+              ></span>
+              <div
+                class="success-circle relative w-10 h-10 rounded-full flex items-center justify-center"
+                style="background-color: #e9f5ec; border: 2px solid #82bf95;"
+              >
+                <svg
+                  class="w-5 h-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#1f7a36"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path class="success-check" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+            <div class="flex-1">
+              <p class="serif text-lg leading-tight">Deposit received</p>
+              <p class="text-xs text-ink/70 mt-1 leading-relaxed">
+                Charged
+                <span id="success-deposit" class="font-medium">$187.50</span>
+                to card ending
+                <span id="success-last4" class="font-mono">4242</span>.
+                Invoice copy sent to
+                <span id="success-email" class="font-medium">you</span>.
+              </p>
+            </div>
+          </div>
+
+          <!-- The actual invoice. This is the element captured by
+               html2pdf.js. Keep all styling inline-friendly (no
+               external classes that change layout under print) and
+               avoid Tailwind classes that depend on viewport state.
+               Custom CSS hooks (.invoice-*) get used by the PDF
+               renderer so we control the print look without
+               clobbering the on-screen look. -->
+          <div
+            id="invoice-doc"
+            class="success-stagger success-summary-card bg-white border border-border rounded-md p-6 md:p-8 text-sm text-ink"
+          >
+            <!-- Header: wordmark left, INVOICE meta right. -->
+            <div class="flex items-start justify-between gap-6 mb-7">
+              <img
+                src="./text part logo transparent.png"
+                alt="Celebration Creation Decor"
+                class="h-12 md:h-14 w-auto"
+              />
+              <div class="text-right">
+                <p
+                  class="text-[10px] tracking-[0.25em] uppercase text-muted mb-1"
+                >
+                  Invoice
+                </p>
+                <p
+                  class="serif text-xl text-ink leading-none"
+                  id="invoice-number"
+                >
+                  CCD-0001
+                </p>
+                <p class="text-xs text-muted mt-2">
+                  Issued
+                  <span id="invoice-issue-date">June 6, 2026</span>
+                </p>
+              </div>
+            </div>
+
+            <!-- BILL TO + EVENT DATE side by side. -->
+            <div class="grid sm:grid-cols-2 gap-6 mb-7">
+              <div>
+                <p
+                  class="text-[10px] tracking-[0.25em] uppercase font-medium text-terracotta mb-2"
+                >
+                  Bill to
+                </p>
+                <div
+                  id="invoice-bill-to"
+                  class="text-ink leading-relaxed"
+                >
+                  <p class="font-medium">—</p>
+                </div>
+              </div>
+              <div class="sm:text-right">
+                <p
+                  class="text-[10px] tracking-[0.25em] uppercase font-medium text-terracotta mb-2"
+                >
+                  Event date
+                </p>
+                <p
+                  class="font-medium text-ink"
+                  id="invoice-event-date"
+                >
+                  —
+                </p>
+              </div>
+            </div>
+
+            <!-- Line items table. -->
+            <table class="w-full text-sm mb-5">
+              <thead>
+                <tr class="border-b-2 border-ink/80">
+                  <th
+                    class="text-left py-2 text-[10px] tracking-[0.2em] uppercase font-medium text-muted"
+                  >
+                    Description
+                  </th>
+                  <th
+                    class="text-right py-2 text-[10px] tracking-[0.2em] uppercase font-medium text-muted"
+                  >
+                    Amount
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="invoice-lines">
+                <!-- Injected by renderInvoice() -->
+              </tbody>
+            </table>
+
+            <!-- Totals stack — Total → Deposit paid → Balance due. -->
             <div
-              class="success-circle relative w-20 h-20 rounded-full flex items-center justify-center"
-              style="background-color: #e9f5ec; border: 2px solid #82bf95;"
+              class="ml-auto sm:w-2/3 md:w-1/2 space-y-2 text-sm border-t-2 border-ink/80 pt-3"
+            >
+              <div class="flex justify-between text-ink/80">
+                <span>Subtotal</span>
+                <span id="invoice-subtotal">$0</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="serif text-base">Total</span>
+                <span class="serif text-base" id="invoice-total">$0</span>
+              </div>
+              <div
+                class="flex justify-between items-center mt-2 pt-2 border-t border-border"
+              >
+                <span class="text-ink/80">
+                  Deposit received
+                  <span
+                    class="ml-2 inline-block px-2 py-0.5 text-[9px] tracking-[0.2em] uppercase font-semibold rounded-sm text-white"
+                    style="background-color: #1f7a36;"
+                    >Paid</span
+                  >
+                </span>
+                <span class="font-medium" id="invoice-deposit">$0</span>
+              </div>
+              <div class="flex justify-between pt-1">
+                <span class="font-medium text-ink">Balance due</span>
+                <span
+                  class="serif text-lg text-terracotta"
+                  id="invoice-balance"
+                  >$0</span
+                >
+              </div>
+              <p class="text-xs text-muted text-right">
+                by <span id="invoice-balance-due-date">—</span>
+              </p>
+            </div>
+
+            <!-- Footer. -->
+            <div
+              class="mt-7 pt-5 border-t border-border text-xs text-muted leading-relaxed"
+            >
+              <p class="mb-2 text-ink/80">
+                Thank you for booking with Celebration Creation Decor.
+              </p>
+              <p>
+                We'll follow up about two weeks before your event with the
+                balance invoice and final coordination details. Questions in
+                the meantime? Reply to the invoice email and we'll be in
+                touch.
+              </p>
+            </div>
+          </div>
+
+          <!-- Action row. -->
+          <div
+            class="success-stagger success-close mt-5 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3"
+          >
+            <button
+              onclick="closeCheckout()"
+              class="text-sm text-muted hover:text-ink font-medium"
+            >
+              ← Close
+            </button>
+            <button
+              type="button"
+              onclick="downloadInvoicePdf()"
+              class="bg-ink hover:bg-terracotta text-cream py-3 px-5 text-sm font-medium tracking-wide transition-colors flex items-center justify-center gap-2 rounded-sm"
             >
               <svg
-                class="w-10 h-10"
+                class="w-4 h-4"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#1f7a36"
-                stroke-width="3"
+                stroke="currentColor"
+                stroke-width="2"
                 stroke-linecap="round"
                 stroke-linejoin="round"
               >
-                <path class="success-check" d="M5 13l4 4L19 7" />
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
-            </div>
+              Download invoice PDF
+            </button>
           </div>
-
-          <p
-            class="serif text-2xl mb-2 tracking-tight success-stagger success-heading"
-          >
-            Booking confirmed
-          </p>
-          <p
-            class="text-sm text-ink/70 mb-6 leading-relaxed success-stagger success-desc"
-          >
-            We've charged a 50% deposit of
-            <span id="success-deposit" class="font-medium">$187.50</span>
-            to the card ending in
-            <span id="success-last4" class="font-mono">4242</span>.
-            Confirmation email on the way to
-            <span id="success-email" class="font-medium">you</span>.
-          </p>
-
-          <div
-            class="bg-cream-warm rounded-md p-4 text-sm text-left mb-6 border border-border success-stagger success-summary-card"
-          >
-            <p class="text-xs uppercase tracking-[0.18em] text-muted mb-3">
-              Your booking
-            </p>
-            <div id="success-summary" class="space-y-1.5"></div>
-            <div
-              class="mt-3 pt-3 border-t border-border flex justify-between"
-            >
-              <span class="text-ink/70">Balance due 48h before event</span>
-              <span class="font-medium" id="success-balance">$187.50</span>
-            </div>
-          </div>
-
-          <button
-            onclick="closeCheckout()"
-            class="text-sm text-terracotta hover:text-terracotta-dark font-medium success-stagger success-close"
-          >
-            Close →
-          </button>
         </div>
       </div>
     </div>
 
-    <!-- ============================= JS: live total + summary ============================= -->
+    <!-- ============================= JS: live total + summary + invoice ============================= -->
     <script>
+      // ===== Date helpers — pinned to America/New_York display so the
+      // pretty-formatted strings don't drift around UTC midnight.
+      const TZ = 'America/New_York';
+      const DAY_MS = 24 * 60 * 60 * 1000;
+
+      // "Sat, Jul 11, 2026" — the canonical display format used in the
+      // summary panel and invoice. Compact but unambiguous (year + month
+      // name + day of week).
+      function formatPretty(d) {
+        if (!d) return '—';
+        return d.toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          timeZone: TZ,
+        });
+      }
+      // "June 6, 2026" — used for invoice issue date and balance-due
+      // date (no day of week needed there, less visual noise).
+      function formatLong(d) {
+        if (!d) return '—';
+        return d.toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+          timeZone: TZ,
+        });
+      }
+      // Convert a YYYY-MM-DD string from Flatpickr (which always emits
+      // local-midnight) into a Date anchored at noon UTC so the
+      // toLocaleDateString TZ shift doesn't flip the date.
+      function dateFromYmd(ymd) {
+        if (!ymd) return null;
+        return new Date(ymd + 'T12:00:00Z');
+      }
+
       const fmt = (n) =>
         '$' +
         n.toLocaleString('en-US', {
           minimumFractionDigits: n % 1 === 0 ? 0 : 2,
           maximumFractionDigits: 2,
         });
+
+      // ===== State =====
+      // selectedEventDate is the canonical event date across the page —
+      // populated by Flatpickr, consumed by summary panels + invoice.
+      let selectedEventDate = null;
 
       function getSelectedPackage() {
         return document.querySelector('input[name="package"]:checked');
@@ -1213,6 +1575,62 @@
           document.querySelectorAll('input[name^="addon-"]:checked')
         );
       }
+
+      // Balance due date = event date - 14 days. If no event date is
+      // picked yet, returns null (summary shows "—" placeholder).
+      function getBalanceDueDate() {
+        if (!selectedEventDate) return null;
+        return new Date(selectedEventDate.getTime() - 14 * DAY_MS);
+      }
+
+      // ===== Flatpickr event-date picker =====
+      // BOOKED_DATES is the mockup data source for "this date is taken."
+      // Hardcoded for now so we can demo "calendar visibly blocks taken
+      // dates" without needing a real backend. When this graduates to
+      // celebrationcreationdecor.com, swap this array for a fetch to
+      // a real bookings endpoint. Format must be YYYY-MM-DD so Flatpickr
+      // matches them correctly.
+      const BOOKED_DATES = [
+        '2026-06-13',
+        '2026-06-14',
+        '2026-06-20',
+        '2026-07-04',
+        '2026-07-11',
+        '2026-07-18',
+        '2026-08-01',
+        '2026-08-15',
+        '2026-09-05',
+      ];
+      const dateInput = document.getElementById('event-date');
+      const dateReadout = document.getElementById('event-date-readout');
+      const dateValuePretty = document.getElementById('event-date-pretty');
+      const balanceValuePretty = document.getElementById('balance-due-pretty');
+
+      const fp = flatpickr(dateInput, {
+        // Two weeks of lead time gates booking — same rule as the
+        // balance-due offset (we need that window to prep + collect
+        // the balance).
+        minDate: new Date(Date.now() + 14 * DAY_MS),
+        // 18-month booking window — plenty for a luxury-picnic business.
+        maxDate: new Date(Date.now() + 540 * DAY_MS),
+        disable: BOOKED_DATES,
+        dateFormat: 'Y-m-d',
+        altInput: true,
+        altFormat: 'F j, Y',
+        onChange: (selectedDates, dateStr) => {
+          selectedEventDate = dateFromYmd(dateStr);
+          if (selectedEventDate) {
+            dateValuePretty.textContent = formatPretty(selectedEventDate);
+            balanceValuePretty.textContent = formatLong(
+              getBalanceDueDate()
+            );
+            dateReadout.classList.remove('hidden');
+          } else {
+            dateReadout.classList.add('hidden');
+          }
+          recompute();
+        },
+      });
 
       function recompute() {
         const pkg = getSelectedPackage();
@@ -1227,8 +1645,9 @@
         );
         const subtotal = pkgPrice + addonsTotal;
         const deposit = subtotal / 2;
+        const balance = subtotal - deposit;
 
-        // Desktop summary
+        // Desktop summary — package + lines.
         document.getElementById('summary-package').textContent = pkgLabel;
         document.getElementById('summary-guests').textContent =
           pkgGuests + ' guests';
@@ -1236,8 +1655,13 @@
         document.getElementById('summary-pkg-price').textContent =
           fmt(pkgPrice);
 
+        // Desktop summary — event date (pulled from selectedEventDate).
+        document.getElementById('summary-event-date').textContent =
+          selectedEventDate
+            ? formatPretty(selectedEventDate)
+            : 'Pick a date above';
+
         const linesEl = document.getElementById('summary-lines');
-        // remove all addon lines (anything after the first child)
         while (linesEl.children.length > 1) {
           linesEl.removeChild(linesEl.lastChild);
         }
@@ -1254,10 +1678,29 @@
           fmt(subtotal);
         document.getElementById('summary-total').textContent = fmt(subtotal);
 
-        // Mobile summary
+        // Desktop summary — deposit + balance breakdown.
+        document.getElementById('summary-deposit').textContent = fmt(deposit);
+        document.getElementById('summary-balance').textContent = fmt(balance);
+        const balanceDue = getBalanceDueDate();
+        document.getElementById('summary-balance-label').textContent =
+          balanceDue
+            ? `Balance due ${formatLong(balanceDue)}`
+            : 'Balance due (14 days before event)';
+
+        // Mobile summary.
         document.getElementById('mobile-total').textContent = fmt(subtotal);
         const mobileLines = document.getElementById('mobile-summary-lines');
         mobileLines.innerHTML = `
+          ${
+            selectedEventDate
+              ? `<div class="flex justify-between text-ink/80 pb-2 border-b border-border">
+                   <span>Event date</span>
+                   <span class="font-medium">${formatPretty(
+                     selectedEventDate
+                   )}</span>
+                 </div>`
+              : ''
+          }
           <div class="flex justify-between text-ink/80">
             <span>${pkgLabel}</span><span>${fmt(pkgPrice)}</span>
           </div>
@@ -1273,11 +1716,25 @@
             <span class="serif text-base">Total</span>
             <span class="serif text-lg">${fmt(subtotal)}</span>
           </div>
+          <div class="flex justify-between text-xs text-ink/70">
+            <span>Deposit today (50%)</span>
+            <span>${fmt(deposit)}</span>
+          </div>
         `;
 
-        // Checkout preview modal
+        // Checkout preview modal — order summary lines.
         const checkoutLines = document.getElementById('checkout-lines');
         checkoutLines.innerHTML = `
+          ${
+            selectedEventDate
+              ? `<div class="flex justify-between text-muted pb-2 mb-2 border-b border-border">
+                   <span>Event date</span>
+                   <span class="text-ink">${formatPretty(
+                     selectedEventDate
+                   )}</span>
+                 </div>`
+              : ''
+          }
           <div class="flex justify-between"><span>${pkgLabel}</span><span>${fmt(
             pkgPrice
           )}</span></div>
@@ -1296,6 +1753,25 @@
       }
 
       function goToCheckout() {
+        // Gate checkout on having an event date picked. Without a date
+        // we can't compute a balance-due deadline + the invoice has no
+        // anchor. Scrolls the user back to the date picker.
+        if (!selectedEventDate) {
+          dateInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          fp.open();
+          return;
+        }
+
+        // Pre-fill checkout email from the event-details email if the
+        // user already filled it in upstairs. Cardholder name is left
+        // blank on purpose — booker name (event details) and
+        // cardholder name may differ.
+        const eventEmailEl = document.getElementById('event-email');
+        const checkoutEmail = document.getElementById('checkout-email');
+        if (eventEmailEl && eventEmailEl.value.trim() && !checkoutEmail.value) {
+          checkoutEmail.value = eventEmailEl.value.trim();
+        }
+
         // Reset to form view every time we open the modal. Clear any
         // animation classes so the next success reveal starts clean.
         const formEl = document.getElementById('checkout-form');
@@ -1313,8 +1789,6 @@
 
       // ===== Card form input formatting =====
 
-      // Detect Visa/Mastercard/Amex/Discover from the first few digits so
-      // the right brand label appears in the corner of the card field.
       function detectBrand(digits) {
         if (/^4/.test(digits)) return 'VISA';
         if (/^(5[1-5]|2[2-7])/.test(digits)) return 'MASTERCARD';
@@ -1353,20 +1827,66 @@
       });
 
       zipEl.addEventListener('input', (e) => {
-        // Allow alphanumeric for international postcodes.
         e.target.value = e.target.value
           .replace(/[^a-zA-Z0-9\s-]/g, '')
           .slice(0, 10)
           .toUpperCase();
       });
 
-      // ===== Pay button: validate, fake processing, transition to success =====
+      // Force state field to uppercase 2-letter abbrev as user types.
+      const stateEl = document.getElementById('checkout-state');
+      stateEl.addEventListener('input', (e) => {
+        e.target.value = e.target.value
+          .replace(/[^a-zA-Z]/g, '')
+          .slice(0, 2)
+          .toUpperCase();
+      });
+
+      // ===== Pay button: validate, fake processing, render invoice =====
       function handlePay() {
         const errEl = document.getElementById('checkout-error');
+        const emailEl = document.getElementById('checkout-email');
+        const nameEl = document.getElementById('checkout-name');
+        const streetEl = document.getElementById('checkout-street');
+        const cityEl = document.getElementById('checkout-city');
         const cardDigits = cardEl.value.replace(/\D/g, '');
         const expDigits = expEl.value.replace(/\D/g, '');
         const cvcDigits = cvcEl.value;
 
+        // Validate contact + billing before card. Cleaner UX —
+        // catches the simplest missing fields first.
+        if (!/^\S+@\S+\.\S+$/.test(emailEl.value.trim())) {
+          showError('Enter a valid email — the invoice goes here.');
+          emailEl.focus();
+          return;
+        }
+        if (nameEl.value.trim().length < 2) {
+          showError('Enter the cardholder name.');
+          nameEl.focus();
+          return;
+        }
+        if (streetEl.value.trim().length < 3) {
+          showError('Enter the street address for billing.');
+          streetEl.focus();
+          return;
+        }
+        if (cityEl.value.trim().length < 2) {
+          showError('Enter the city for billing.');
+          cityEl.focus();
+          return;
+        }
+        if (stateEl.value.trim().length !== 2) {
+          showError('Enter a 2-letter state (e.g. NY).');
+          stateEl.focus();
+          return;
+        }
+        if (zipEl.value.replace(/\s/g, '').length < 3) {
+          showError('Enter your ZIP / postal code.');
+          zipEl.focus();
+          return;
+        }
+
+        // Card validation.
         if (cardDigits.length < 13) {
           showError('Card number looks incomplete.');
           cardEl.focus();
@@ -1377,17 +1897,13 @@
           expEl.focus();
           return;
         }
-        // Reasonability check on expiry month.
         const month = parseInt(expDigits.slice(0, 2), 10);
         if (month < 1 || month > 12) {
           showError('Expiry month must be 01-12.');
           expEl.focus();
           return;
         }
-        // Check if expiry is in the past.
         const year = parseInt('20' + expDigits.slice(2, 4), 10);
-        // Today is treated as 2026-06 for the demo; in production use
-        // new Date() at runtime.
         const now = new Date();
         const expDate = new Date(year, month - 1, 1);
         const cutoff = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -1401,15 +1917,10 @@
           cvcEl.focus();
           return;
         }
-        if (zipEl.value.replace(/\s/g, '').length < 3) {
-          showError('Please enter your ZIP / postal code.');
-          zipEl.focus();
-          return;
-        }
 
         errEl.classList.add('hidden');
 
-        // Show loading state on the button.
+        // Loading state on the button.
         const payBtn = document.getElementById('checkout-pay');
         payBtn.disabled = true;
         payBtn.innerHTML = `
@@ -1422,7 +1933,6 @@
 
         // Fake 1.5s "talking to Stripe" delay, then transition.
         setTimeout(() => {
-          // Reset button so it's clean if the modal reopens.
           payBtn.disabled = false;
           payBtn.innerHTML = `Pay 50% deposit · <span id="checkout-deposit">$187.50</span>`;
           showSuccess(cardDigits);
@@ -1435,9 +1945,19 @@
         errEl.classList.remove('hidden');
       }
 
-      function showSuccess(cardDigits) {
-        // Populate the success view with real numbers from the current
-        // selection + the last 4 of the card the user actually typed.
+      // ===== Invoice rendering =====
+      // Random per-session invoice number, padded to 4 digits. In the
+      // real build this becomes a server-issued sequential number
+      // (CCD-0001, CCD-0002, ...) — same display format.
+      function generateInvoiceNumber() {
+        const n = 1 + Math.floor(Math.random() * 9000);
+        return 'CCD-' + String(n).padStart(4, '0');
+      }
+      // Cached so the same number renders across the success view +
+      // PDF filename even if showSuccess() is called more than once.
+      let currentInvoiceNumber = null;
+
+      function renderInvoice(cardDigits) {
         const pkg = getSelectedPackage();
         const pkgLabel = pkg ? pkg.dataset.label : '—';
         const pkgPrice = pkg ? Number(pkg.dataset.price) : 0;
@@ -1448,47 +1968,79 @@
         const deposit = subtotal / 2;
         const balance = subtotal - deposit;
 
-        const emailField = document.getElementById('event-email');
-        const emailVal = emailField ? emailField.value.trim() : '';
+        const name =
+          document.getElementById('checkout-name').value.trim() || '—';
+        const street =
+          document.getElementById('checkout-street').value.trim();
+        const city = document.getElementById('checkout-city').value.trim();
+        const state = document
+          .getElementById('checkout-state')
+          .value.trim()
+          .toUpperCase();
+        const zip = document.getElementById('checkout-zip').value.trim();
+        const email =
+          document.getElementById('checkout-email').value.trim() || '—';
 
-        document.getElementById('success-deposit').textContent = fmt(deposit);
-        document.getElementById('success-balance').textContent = fmt(balance);
-        document.getElementById('success-last4').textContent =
-          cardDigits.slice(-4);
-        document.getElementById('success-email').textContent =
-          emailVal || 'the email you provided';
-
-        // Build the booking summary block.
-        const sumEl = document.getElementById('success-summary');
-        sumEl.innerHTML = `
-          <div class="flex justify-between"><span>${pkgLabel}</span><span>${fmt(
-            pkgPrice
-          )}</span></div>
-          ${addons
-            .map(
-              (a) =>
-                `<div class="flex justify-between"><span>${a.dataset.label}</span><span>+${fmt(
-                  Number(a.dataset.price)
-                )}</span></div>`
-            )
-            .join('')}
-          <div class="flex justify-between pt-2 border-t border-border mt-2">
-            <span class="font-medium">Total</span>
-            <span class="font-medium">${fmt(subtotal)}</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-ink/70">Deposit charged today</span>
-            <span class="text-ink/70">${fmt(deposit)}</span>
-          </div>
+        // BILL TO block — name + multi-line address + email.
+        const billToEl = document.getElementById('invoice-bill-to');
+        billToEl.innerHTML = `
+          <p class="font-medium text-ink">${name}</p>
+          ${street ? `<p>${street}</p>` : ''}
+          <p>${[city, state].filter(Boolean).join(', ')} ${zip}</p>
+          <p class="text-muted mt-1">${email}</p>
         `;
 
-        // Staged transition:
-        //   1. Form fades out gracefully (CSS .fading class triggers
-        //      the keyframe animation declared in <style>)
-        //   2. After ~280ms the form is hidden and success is revealed
-        //   3. force-reflow trick removes + re-adds .animate-in so the
-        //      staged keyframes replay even if this is the 2nd / 3rd
-        //      success in the same page session
+        // Top-right header.
+        currentInvoiceNumber = generateInvoiceNumber();
+        document.getElementById('invoice-number').textContent =
+          currentInvoiceNumber;
+        document.getElementById('invoice-issue-date').textContent = formatLong(
+          new Date()
+        );
+
+        // Event date right column.
+        document.getElementById('invoice-event-date').textContent =
+          selectedEventDate ? formatPretty(selectedEventDate) : '—';
+
+        // Line items — package row first, then each ticked add-on.
+        const linesEl = document.getElementById('invoice-lines');
+        const rows = [
+          `<tr class="border-b border-border">
+             <td class="py-3 text-ink">${pkgLabel}</td>
+             <td class="py-3 text-right text-ink">${fmt(pkgPrice)}</td>
+           </tr>`,
+          ...addons.map(
+            (a) => `
+            <tr class="border-b border-border">
+              <td class="py-3 text-ink/80">+ ${a.dataset.label}</td>
+              <td class="py-3 text-right text-ink/80">${fmt(
+                Number(a.dataset.price)
+              )}</td>
+            </tr>
+          `
+          ),
+        ];
+        linesEl.innerHTML = rows.join('');
+
+        // Totals stack.
+        document.getElementById('invoice-subtotal').textContent =
+          fmt(subtotal);
+        document.getElementById('invoice-total').textContent = fmt(subtotal);
+        document.getElementById('invoice-deposit').textContent = fmt(deposit);
+        document.getElementById('invoice-balance').textContent = fmt(balance);
+        document.getElementById('invoice-balance-due-date').textContent =
+          formatLong(getBalanceDueDate());
+
+        // Confirmation strip — same data, smaller surface.
+        document.getElementById('success-deposit').textContent = fmt(deposit);
+        document.getElementById('success-last4').textContent =
+          cardDigits.slice(-4);
+        document.getElementById('success-email').textContent = email;
+      }
+
+      function showSuccess(cardDigits) {
+        renderInvoice(cardDigits);
+
         const formEl = document.getElementById('checkout-form');
         const successEl = document.getElementById('checkout-success');
 
@@ -1498,18 +2050,34 @@
           formEl.classList.remove('fading');
 
           successEl.classList.remove('hidden');
-          // Strip then force-reflow then re-add the animate-in class
-          // so each child's keyframe restarts from scratch. Without
-          // this trick the second open of the modal shows the success
-          // state instantly, with no animation.
           successEl.classList.remove('animate-in');
-          // eslint-disable-next-line no-unused-expressions
+          // force-reflow trick — replays the staggered keyframes from
+          // scratch on every success, even if it's the 2nd / 3rd open.
           void successEl.offsetWidth;
           successEl.classList.add('animate-in');
         }, 280);
       }
 
-      // Initial render + listeners
+      // ===== Download invoice as PDF =====
+      // Uses html2pdf.js (CDN'd above). Captures the #invoice-doc
+      // element as canvas + wraps it in a jsPDF page. Filename uses
+      // the rendered invoice number so the customer's downloads
+      // folder stays organized.
+      function downloadInvoicePdf() {
+        const el = document.getElementById('invoice-doc');
+        const filename =
+          (currentInvoiceNumber || 'celebration-invoice') + '.pdf';
+        const opts = {
+          margin: 0.4,
+          filename,
+          image: { type: 'jpeg', quality: 0.96 },
+          html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+          jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+        };
+        html2pdf().set(opts).from(el).save();
+      }
+
+      // Initial render + listeners.
       document.querySelectorAll('input[name="package"]').forEach((i) =>
         i.addEventListener('change', recompute)
       );
