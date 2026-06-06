@@ -2830,24 +2830,13 @@
           }
         }
 
-        // ---- Random service category + random package within it.
-        // Demo variety: each refresh might show a Luxury Picnic
-        // booking or a Balloon Artistry one. selectCategory() handles
-        // showing the right grid + auto-picking the first package;
-        // we then override that with a random package in the same
-        // category so the demo doesn't always land on the first tier.
-        const cat = Math.random() < 0.5 ? 'picnic' : 'balloon';
-        selectCategory(cat);
-        const pkgsInCat = Array.from(
-          document.querySelectorAll(
-            'input[name="package"][data-category="' + cat + '"]'
-          )
-        );
-        if (pkgsInCat.length) {
-          pkgsInCat.forEach((p) => (p.checked = false));
-          pkgsInCat[Math.floor(Math.random() * pkgsInCat.length)].checked =
-            true;
-        }
+        // NOTE: deliberately NOT auto-picking a service category
+        // here so the demo opens with both service tiles in their
+        // neutral unselected state. The aunt sees the visible
+        // "pick a service → packages appear" interaction on load.
+        // Add-ons + everything else still pre-fill (just no
+        // package, since you can't pick a package without first
+        // picking a category).
 
         // ---- 2 random add-ons so the order has variety.
         const addonInputs = Array.from(
