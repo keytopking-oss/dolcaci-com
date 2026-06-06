@@ -50,8 +50,12 @@
 
     <!-- html2pdf.js — turns the rendered invoice DOM into a real PDF
          download. Lets the customer save / print / forward their
-         booking confirmation. Client-side only; no backend needed. -->
+         booking confirmation. Client-side only; no backend needed.
+         IMPORTANT: html2pdf.bundle does NOT expose jsPDF on window —
+         it's bundled internally. We need a separate jsPDF script for
+         the custom-page-fit logic in downloadInvoicePdf(). -->
     <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
     <style>
       html {
@@ -2234,18 +2238,31 @@
           },
         };
 
+        // Resolve jsPDF constructor — separate CDN exposes
+        // window.jspdf.jsPDF (lowercase namespace, capital-J inner).
+        // Bail loudly if the script didn't load so a silent click
+        // never goes unnoticed.
+        const jsPDFCtor =
+          (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+        if (!jsPDFCtor) {
+          console.error(
+            'downloadInvoicePdf: jsPDF not loaded — check CDN script tag.'
+          );
+          alert(
+            'Sorry — the PDF library didn’t load. Reload the page and try again.'
+          );
+          return;
+        }
+
         html2pdf()
           .set(opts)
           .from(el)
           .toCanvas()
           .then((canvas) => {
-            // html2pdf.js bundles jsPDF as window.jspdf.jsPDF (lowercase
-            // namespace, capital-J inner constructor).
-            const { jsPDF } = window.jspdf;
             const pageWidth = 8.5;
             const pageHeight = 11;
 
-            const pdf = new jsPDF({
+            const pdf = new jsPDFCtor({
               unit: 'in',
               format: 'letter',
               orientation: 'portrait',
@@ -2259,20 +2276,17 @@
             pdf.rect(0, 0, pageWidth, pageHeight, 'F');
 
             // Fit the canvas to the page while preserving aspect ratio.
-            // For a typical invoice (taller than wide), this width-
-            // dominated test fails and we fit by height instead so the
-            // whole thing fits vertically.
+            // Typical invoice is taller than wide so the else-branch
+            // triggers; very short invoices use the if-branch.
             const canvasAspect = canvas.width / canvas.height;
             const pageAspect = pageWidth / pageHeight;
             let imgWidth, imgHeight, x, y;
             if (canvasAspect > pageAspect) {
-              // Canvas relatively wider than page — fit width.
               imgWidth = pageWidth;
               imgHeight = pageWidth / canvasAspect;
               x = 0;
               y = (pageHeight - imgHeight) / 2;
             } else {
-              // Canvas relatively taller than page — fit height.
               imgHeight = pageHeight;
               imgWidth = pageHeight * canvasAspect;
               x = (pageWidth - imgWidth) / 2;
@@ -2288,6 +2302,12 @@
               imgHeight
             );
             pdf.save(filename);
+          })
+          .catch((err) => {
+            console.error('downloadInvoicePdf failed:', err);
+            alert(
+              'PDF generation failed — see the console for details.'
+            );
           });
       }
 
