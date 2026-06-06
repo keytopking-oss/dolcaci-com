@@ -2243,38 +2243,50 @@
             },
           })
           .then((canvas) => {
-            // Use letter-WIDTH (8.5") and let the page height match the
-            // captured invoice's aspect ratio. Result: cream fills the
-            // PDF page edge-to-edge horizontally AND vertically, one
-            // page guaranteed regardless of how many add-ons the user
-            // ticked. The page just gets taller for more content —
-            // standard digital-PDF behavior and prints fine via the
-            // browser's "scale to fit" option.
+            // Standard letter page (8.5x11). Custom page sizes had
+            // an edge case where really tall canvases produced a
+            // multi-page blowup — letter is rock-solid.
+            //
+            // Fit logic:
+            //   - Always fill the page width (no left/right gutter,
+            //     edge-to-edge horizontally)
+            //   - If the natural image height fits the page, render
+            //     it at natural size centered vertically; the cream
+            //     fill covers any top/bottom gap
+            //   - If it overflows, scale the image down proportionally
+            //     so the whole invoice still lands on this one page
+            //     (no second page)
             const pageWidth = 8.5;
-            const canvasAspect = canvas.width / canvas.height;
-            const pageHeight = pageWidth / canvasAspect;
+            const pageHeight = 11;
 
             const pdf = new jsPDFCtor({
               unit: 'in',
-              format: [pageWidth, pageHeight],
-              orientation: pageHeight > pageWidth ? 'portrait' : 'landscape',
+              format: 'letter',
+              orientation: 'portrait',
             });
 
-            // Fill the page cream first as belt-and-suspenders — if
-            // the PNG ever ends up with sub-pixel transparency around
-            // its edges, this catches it.
             pdf.setFillColor(251, 248, 243); // #fbf8f3
             pdf.rect(0, 0, pageWidth, pageHeight, 'F');
 
-            // PNG (lossless) so the cream stays exact. Image fills the
-            // entire page.
+            const canvasAspect = canvas.width / canvas.height;
+            let imgWidth = pageWidth;
+            let imgHeight = pageWidth / canvasAspect;
+            if (imgHeight > pageHeight) {
+              // Scale down proportionally so it fits the page height.
+              const scale = pageHeight / imgHeight;
+              imgHeight = pageHeight;
+              imgWidth = pageWidth * scale;
+            }
+            const x = (pageWidth - imgWidth) / 2;
+            const y = (pageHeight - imgHeight) / 2;
+
             pdf.addImage(
               canvas.toDataURL('image/png'),
               'PNG',
-              0,
-              0,
-              pageWidth,
-              pageHeight
+              x,
+              y,
+              imgWidth,
+              imgHeight
             );
             pdf.save(filename);
           })
